@@ -70,15 +70,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const imageUrl = previewImage.src;
         
-        // OCR configuration with improved settings
+        // OCR configuration
         const ocrConfig = {
             lang: 'eng',
             logger: m => console.log(m),
             tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-/.,: ',
-            tessedit_pageseg_mode: '1',  // Automatic page segmentation with OSD
-            preserve_interword_spaces: '1',  // Preserve spaces between words
-            tessjs_create_hocr: '0',  // Disable HOCR output for better performance
-            tessjs_create_tsv: '0',   // Disable TSV output for better performance
+            tessedit_pageseg_mode: '1',
+            preserve_interword_spaces: '1',
+            tessjs_create_hocr: '0',
+            tessjs_create_tsv: '0',
         };
         
         // Define regex patterns
@@ -155,26 +155,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Improved data extraction function
+    // Improved data extraction
     function extractDataImproved(text, pattern) {
         const match = text.match(pattern);
         if (!match) return null;
         return match[1] ? match[1].trim() : null;
     }
-    
-    function extractData(text, pattern, expiryPattern) {
-        const match = text.match(pattern);
-        if (!match) return null;
-        
-        // For expiry date, make sure we're using the right capture group
-        if (pattern === expiryPattern && match[2]) {
-            return match[2].trim();
-        }
-        
-        return match[1] ? match[1].trim() : null;
-    }
 
-    // Advanced extraction with line-by-line analysis
+    // Extraction with line-by-line analysis
     function extractWithFallback(text) {
         const lines = text.split('\n');
         let idNumber = null;
@@ -259,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return splitMatch[1] + '-' + splitMatch[2];
         }
         
-        // Try to find any sequence of 9-12 digits that might be part of an ID
+        // Find any sequence of 9-12 digits that might be part of an ID
         const anyDigits = text.match(/\b(\d{9,12})\b/);
         if (anyDigits) {
             const digits = anyDigits[1];
