@@ -1,16 +1,43 @@
 const locationData = {
     Luzon: {
         'NCR': {
-            'Metro Manila': ['Manila', 'Quezon City', 'Makati', 'Pasig']
+            'Metro Manila': ['Manila', 'Quezon', 'Makati', 'Pasig', 'Mandaluyong', 
+                'San Juan', 'Marikina', 'Caloocan', 'Malabon', 'Navotas', 'Valenzuela', 
+                 'Pateros', 'Taguig', 'Las Piñas', 'Muntinlupa', 'Parañaque', 'Pasay'
+            ]
         },
         'CAR': {
             'Benguet': ['Baguio City', 'La Trinidad', 'Tuba'],
-            'Ifugao': ['Lagawe', 'Kiangan', 'Lamut']
+            'Ifugao': ['Lagawe', 'Kiangan', 'Lamut'],
+            'Kalinga': [],
+            'Abra': [],
+            'Apayao': [],
+            'Mountain Province': [],
+            'City of Baguio': []
         },
         'Region 1': {
             'Pangasinan': ['Dagupan City', 'Lingayen', 'Alaminos'],
             'La Union': ['San Fernando', 'Agoo', 'Bauang'],
-            'Ilocos Norte': ['Laoag City', 'Batac', 'Paoay']
+            'Ilocos Norte': ['Laoag City', 'Batac', 'Paoay'],
+            'Ilocos Sur': []
+        },
+        'Region 2': {
+            'Batanes': [],
+            'Cagayan': [],
+            'Isabela': [],
+            'Nueva Vizcaya': [],
+            'Quirino': []
+        },
+        'Region 3': {
+            'Aurora': [],
+            'Bataan': [],
+            'Bulacan': [],
+            'Nueva Ecija': [],
+            'Pampanga': [],
+            'Tarlac': [],
+            'Zambales': [],
+            'City of Angeles': [],
+            'City of Olongapo': [],
         }
     },
     Visayas: {
@@ -183,8 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('city-container').classList.add('hidden');
                     document.getElementById('validation-container').classList.add('hidden');
 
-                    // province options
-                    const provinces = Object.keys(locationData[selectedIslandGroup][selectedRegion]);
+                    // province options - sort them alphabetically
+                    const provinces = Object.keys(locationData[selectedIslandGroup][selectedRegion]).sort();
                     console.log('Available Provinces:', provinces); 
 
                     setupSearchableDropdown(
@@ -200,7 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             document.getElementById('city-container').classList.remove('hidden');
                             document.getElementById('validation-container').classList.add('hidden');
 
-                            const cities = locationData[selectedIslandGroup][selectedRegion][selectedProvince];
+                            // Sort cities alphabetically
+                            const cities = locationData[selectedIslandGroup][selectedRegion][selectedProvince].sort();
                             console.log('Available Cities:', cities); 
 
                             setupSearchableDropdown(
