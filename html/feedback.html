@@ -162,5 +162,30 @@
 
     <script src="../js/homepage.js"></script>
     <script src="../js/verify.js"></script>
+
+    <!-- Save form data to localStorage para ig refresh kay ma retain ang content sa feedback page if wala pa na save -->
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        // Restore form data
+        document.getElementById('feedback-name').value = localStorage.getItem('feedback-name') || '';
+        document.getElementById('feedback-email').value = localStorage.getItem('feedback-email') || '';
+        document.getElementById('feedback-stars').value = localStorage.getItem('feedback-stars') || '';
+        document.getElementById('feedback-message').value = localStorage.getItem('feedback-message') || '';
+      });
+
+      // Save on input/change
+      document.getElementById('feedback-name').addEventListener('input', e => {
+        localStorage.setItem('feedback-name', e.target.value);
+      });
+      document.getElementById('feedback-email').addEventListener('input', e => {
+        localStorage.setItem('feedback-email', e.target.value);
+      });
+      document.getElementById('feedback-stars').addEventListener('change', e => {
+        localStorage.setItem('feedback-stars', e.target.value);
+      });
+      document.getElementById('feedback-message').addEventListener('input', e => {
+        localStorage.setItem('feedback-message', e.target.value);
+      });
+    </script>
 </body>
 </html>
