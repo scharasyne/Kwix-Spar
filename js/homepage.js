@@ -398,9 +398,7 @@ const locationData = {
         ]
       }
     }
-  }
-  
-  
+  }  
 
 // filter dropdown options based sa search input
 function filterOptions(inputValue, options) {
