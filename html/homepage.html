@@ -6,6 +6,7 @@
     <title>Homepage</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -63,6 +64,7 @@
                         <div class="dropdown-content absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                             <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-md">Profile</a>
                             <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                            <a href="feedback.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-b-md">Feedback   </a>
                             <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-b-md">Logout</a>
                         </div>
                     </div>
@@ -171,7 +173,55 @@
             </div>
         </div>
     </main>
+  
+    <main class="max-w-4xl mx-auto mt-10 p-6">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="id-upload">
+                    Upload PWD ID Image
+                </label>
+                <input class="hidden" type="file" id="id-upload" accept="image/*">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50" id="drop-area">
+                    <p>Drag and drop your PWD ID image here or click to browse</p>
+                    <p class="text-sm text-gray-500 mt-2">Supported formats: JPG, PNG</p>
+                </div>
+            </div>
+            
+            <div id="preview-container" class="hidden mb-6">
+                <h2 class="text-lg font-semibold mb-2">Preview</h2>
+                <img id="preview-image" class="max-w-full h-auto rounded-lg" src="" alt="ID Preview">
+                <button id="process-button" class="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Process ID
+                </button>
+            </div>
+            
+            <div id="results-container" class="hidden mb-6">
+                <h2 class="text-lg font-semibold mb-2">Extracted Information</h2>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="mb-4">
+                        <span class="font-semibold">ID Number:</span>
+                        <span id="id-number"></span>
+                    </div>
+                    <div class="mb-4">
+                        <span class="font-semibold">Name:</span>
+                        <span id="name"></span>
+                    </div>
+                    <div class="mb-4">
+                        <span class="font-semibold">Expiry Date:</span>
+                        <span id="expiry-date"></span>
+                    </div>
+                    <div id="verification-status" class="mt-4 p-3 rounded-lg"></div>
+                </div>
+            </div>
+            
+            <div id="loading" class="hidden text-center">
+                <p class="mb-2">Processing image...</p>
+                <div class="loader mx-auto w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        </div>
+    </main>
 
-    <script type="module" src="../js/homepage.js"></script>
+    <script src="../js/homepage.js"></script>
+    <script src="../js/verify.js"></script>
 </body>
 </html>
