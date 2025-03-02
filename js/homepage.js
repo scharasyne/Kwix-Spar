@@ -1,9 +1,66 @@
-import locationData from "../data/location.js"
-
-console.log("Import successful:", locationData);
-console.log("Available island groups:", Object.keys(locationData));
-
-
+const locationData = {
+    Luzon: {
+        'NCR': {
+            'Metro Manila': ['Manila', 'Quezon', 'Makati', 'Pasig', 'Mandaluyong', 
+                'San Juan', 'Marikina', 'Caloocan', 'Malabon', 'Navotas', 'Valenzuela', 
+                 'Pateros', 'Taguig', 'Las Piñas', 'Muntinlupa', 'Parañaque', 'Pasay'
+            ]
+        },
+        'CAR': {
+            'Benguet': ['Baguio City', 'La Trinidad', 'Tuba'],
+            'Ifugao': ['Lagawe', 'Kiangan', 'Lamut'],
+            'Kalinga': [],
+            'Abra': [],
+            'Apayao': [],
+            'Mountain Province': [],
+            'City of Baguio': []
+        },
+        'Region 1': {
+            'Pangasinan': ['Dagupan City', 'Lingayen', 'Alaminos'],
+            'La Union': ['San Fernando', 'Agoo', 'Bauang'],
+            'Ilocos Norte': ['Laoag City', 'Batac', 'Paoay'],
+            'Ilocos Sur': []
+        },
+        'Region 2': {
+            'Batanes': [],
+            'Cagayan': [],
+            'Isabela': [],
+            'Nueva Vizcaya': [],
+            'Quirino': []
+        },
+        'Region 3': {
+            'Aurora': [],
+            'Bataan': [],
+            'Bulacan': [],
+            'Nueva Ecija': [],
+            'Pampanga': [],
+            'Tarlac': [],
+            'Zambales': [],
+            'City of Angeles': [],
+            'City of Olongapo': [],
+        }
+    },
+    Visayas: {
+        'Region 6': {
+            'Iloilo': ['Iloilo City', 'Oton', 'Pavia'],
+            'Negros Occidental': ['Bacolod City', 'Silay', 'Talisay']
+        },
+        'Region 7': {
+            'Cebu': ['Cebu City', 'Mandaue City', 'Lapu-Lapu City'],
+            'Bohol': ['Tagbilaran City', 'Panglao', 'Dauis']
+        }
+    },
+    Mindanao: {
+        'Region 10': {
+            'Misamis Oriental': ['Cagayan de Oro', 'Gingoog', 'El Salvador'],
+            'Bukidnon': ['Malaybalay', 'Valencia', 'Maramag']
+        },
+        'Region 11': {
+            'Davao del Sur': ['Davao City', 'Digos City', 'Santa Cruz'],
+            'Davao Oriental': ['Mati City', 'Lupon', 'Banaybanay']
+        }
+    }
+};
 
 // filter dropdown options based sa search input
 function filterOptions(inputValue, options) {
