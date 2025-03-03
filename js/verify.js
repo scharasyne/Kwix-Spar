@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Get DOM elements
     const dropArea = document.getElementById('drop-area');
     const fileInput = document.getElementById('id-upload');
     const previewContainer = document.getElementById('preview-container');
@@ -8,12 +7,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultsContainer = document.getElementById('results-container');
     const loadingIndicator = document.getElementById('loading');
     
-    // Handle file selection
     dropArea.addEventListener('click', () => {
         fileInput.click();
     });
     
-    // Handle drag and drop
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropArea.addEventListener(eventName, preventDefaults, false);
     });
