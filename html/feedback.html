@@ -122,19 +122,20 @@
 
                 <!-- Star Rating Field (required) -->
                 <div>
-                    <label for="feedback-stars" class="block text-sm font-medium text-gray-700">Rating</label>
-                    <select
-                        id="feedback-stars"
-                        class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[#1B3A57] focus:border-[#1B3A57]"
-                        required
-                    >
-                        <option value="">Select a rating</option>
-                        <option value="5">5 Stars</option>
-                        <option value="4">4 Stars</option>
-                        <option value="3">3 Stars</option>
-                        <option value="2">2 Stars</option>
-                        <option value="1">1 Star</option>
-                    </select>
+                    <label for="star-rating" class="block text-sm font-medium text-gray-700">
+                        Rating <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex items-center mt-2">
+                        <div id="star-rating" class="flex">
+                            <button type="button" class="star-btn text-4xl text-gray-300 hover:text-yellow-400" data-rating="1">★</button>
+                            <button type="button" class="star-btn text-4xl text-gray-300 hover:text-yellow-400" data-rating="2">★</button>
+                            <button type="button" class="star-btn text-4xl text-gray-300 hover:text-yellow-400" data-rating="3">★</button>
+                            <button type="button" class="star-btn text-4xl text-gray-300 hover:text-yellow-400" data-rating="4">★</button>
+                            <button type="button" class="star-btn text-4xl text-gray-300 hover:text-yellow-400" data-rating="5">★</button>
+                        </div>
+                        <input type="hidden" id="feedback-stars" name="rating" value="" required>
+                        <span id="rating-error" class="ml-2 text-sm text-red-500 hidden">Please select a rating</span>
+                    </div>
                 </div>
 
                 <!-- Message Field (required) -->
@@ -496,5 +497,93 @@
         }, 3000);
       });
     </script>
+    <!-- Add this script section right after the existing scripts, before the closing </body> tag -->
+
+<!-- Update the Star rating functionality script to include hover behavior -->
+<script>
+  // Star rating functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    const starButtons = document.querySelectorAll('.star-btn');
+    const feedbackStarsInput = document.getElementById('feedback-stars');
+    let savedRatingValue = 0;
+    
+    // Apply saved rating from localStorage when page loads
+    const savedRating = localStorage.getItem('feedback-stars');
+    if (savedRating) {
+      savedRatingValue = parseInt(savedRating);
+      updateStars(savedRatingValue);
+    }
+    
+    // Add click handlers to each star
+    starButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const rating = parseInt(this.getAttribute('data-rating'));
+        savedRatingValue = rating;
+        updateStars(rating);
+        feedbackStarsInput.value = rating;
+        localStorage.setItem('feedback-stars', rating);
+        
+        // Hide error message if it's showing
+        document.getElementById('rating-error').classList.add('hidden');
+      });
+      
+      // Add hover handlers to create the "fill to the left" effect
+      button.addEventListener('mouseenter', function() {
+        const hoverRating = parseInt(this.getAttribute('data-rating'));
+        highlightStars(hoverRating);
+      });
+      
+      button.addEventListener('mouseleave', function() {
+        // When mouse leaves, revert to the saved rating
+        updateStars(savedRatingValue);
+      });
+    });
+    
+    // Function to update star appearance based on selected rating
+    function updateStars(rating) {
+      starButtons.forEach(button => {
+        const buttonRating = parseInt(button.getAttribute('data-rating'));
+        if (buttonRating <= rating) {
+          button.classList.remove('text-gray-300');
+          button.classList.add('text-yellow-400');
+        } else {
+          button.classList.remove('text-yellow-400');
+          button.classList.add('text-gray-300');
+        }
+      });
+    }
+    
+    // Function to temporarily highlight stars on hover
+    function highlightStars(rating) {
+      starButtons.forEach(button => {
+        const buttonRating = parseInt(button.getAttribute('data-rating'));
+        if (buttonRating <= rating) {
+          button.classList.remove('text-gray-300');
+          button.classList.add('text-yellow-400');
+        } else {
+          button.classList.remove('text-yellow-400');
+          button.classList.add('text-gray-300');
+        }
+      });
+    }
+  });
+  
+  // Update the clear button functionality to also reset stars
+  const originalClearHandler = document.getElementById('clear-feedback').onclick;
+  document.getElementById('clear-feedback').onclick = function() {
+    // Call the original handler first
+    if (originalClearHandler) originalClearHandler();
+    
+    // Reset star colors
+    const starButtons = document.querySelectorAll('.star-btn');
+    starButtons.forEach(button => {
+      button.classList.remove('text-yellow-400');
+      button.classList.add('text-gray-300');
+    });
+    
+    // Reset the saved rating value in the DOM
+    document.getElementById('feedback-stars').value = '';
+  };
+</script>
 </body>
 </html>
