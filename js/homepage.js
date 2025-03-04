@@ -133,7 +133,41 @@ const locationData = {
                 'Botolan', 'Cabangan', 'Candelaria', 'Castillejos', 'Iba', 'Masinloc', 'Olongapo',
                 'Palauig', 'San Antonio', 'San Felipe', 'San Marcelino', 'San Narciso', 'Santa Cruz', 'Subic'
             ]
-        }
+        },
+        'Region 5': {  // Add Region 5 (Bicol Region)
+            'Albay': [
+                'Bacacay', 'Camalig', 'Daraga', 'Guinobatan', 'Jovellar', 'Legazpi City',
+                'Libon', 'Ligao City', 'Malilipot', 'Malinao', 'Manito', 'Oas',
+                'Pio Duran', 'Polangui', 'Rapu-Rapu', 'Santo Domingo', 'Tabaco City', 'Tiwi'
+            ],
+            'Camarines Norte': [
+                'Basud', 'Capalonga', 'Daet', 'Jose Panganiban', 'Labo', 'Mercedes',
+                'Paracale', 'San Lorenzo Ruiz', 'San Vicente', 'Santa Elena', 'Talisay', 'Vinzons'
+            ],
+            'Camarines Sur': [
+                'Baao', 'Balatan', 'Bato', 'Bombon', 'Buhi', 'Bula', 'Cabusao', 
+                'Calabanga', 'Camaligan', 'Canaman', 'Caramoan', 'Del Gallego', 'Gainza',
+                'Garchitorena', 'Goa', 'Iriga City', 'Lagonoy', 'Libmanan', 'Lupi',
+                'Magarao', 'Milaor', 'Minalabac', 'Nabua', 'Naga City', 'Ocampo',
+                'Pamplona', 'Pasacao', 'Pili', 'Presentacion', 'Ragay', 'Sagñay',
+                'San Fernando', 'San Jose', 'Sipocot', 'Siruma', 'Tigaon', 'Tinambac'
+            ],
+            'Catanduanes': [
+                'Bagamanoc', 'Baras', 'Bato', 'Caramoran', 'Gigmoto', 'Pandan',
+                'Panganiban', 'San Andres', 'San Miguel', 'Viga', 'Virac'
+            ],
+            'Masbate': [
+                'Aroroy', 'Baleno', 'Balud', 'Batuan', 'Cataingan', 'Cawayan',
+                'Claveria', 'Dimasalang', 'Esperanza', 'Mandaon', 'Masbate City',
+                'Milagros', 'Mobo', 'Monreal', 'Palanas', 'Pio V. Corpuz', 'Placer',
+                'San Fernando', 'San Jacinto', 'San Pascual', 'Uson'
+            ],
+            'Sorsogon': [  // Add Sorsogon province
+                'Barcelona', 'Bulan', 'Bulusan', 'Casiguran', 'Castilla', 'Donsol',
+                'Gubat', 'Irosin', 'Juban', 'Magallanes', 'Matnog', 'Pilar',
+                'Prieto Diaz', 'Santa Magdalena', 'Sorsogon City'
+            ]
+        },
     },
     Visayas: {
         'Region 6': {
@@ -763,60 +797,55 @@ function processAddress(addressText) {
     const cleanInput = addressText.toLowerCase().trim();
     
     // Remove common filler words
-    const locationText = cleanInput.replace(/\bphilippines\b|\bph\b/gi, '').trim();
+    const locationText = cleanInput.replace(/\bphilippines\b|\bph\b|\bin\b/gi, '').trim();
     
-    // Split by common delimiters
-    const parts = locationText.split(/,|\s+/).map(part => part.trim().toLowerCase()).filter(part => part);
+    // First check if we have a comma-separated format (which is more reliable)
+    const segments = locationText.split(',').map(s => s.trim());
+    const hasCommaFormat = segments.length > 1;
     
-    // Create a scoring system for matches
-    const matches = {
-        cities: [],
-        provinces: []
-    };
+    // Create a mapping of all city/municipality names to their locations
+    // This helps us handle name collisions
+    const cityMap = {};
+    const provinceMap = {};
     
-    // Look for matches in the locationData
     for (const islandGroup in locationData) {
         for (const region in locationData[islandGroup]) {
             for (const province in locationData[islandGroup][region]) {
+                // Track provinces
+                if (!provinceMap[province.toLowerCase()]) {
+                    provinceMap[province.toLowerCase()] = [];
+                }
+                provinceMap[province.toLowerCase()].push({
+                    islandGroup,
+                    region,
+                    province
+                });
+                
+                // Track cities
                 const cities = locationData[islandGroup][region][province];
-                
-                const provinceLower = province.toLowerCase();
-                // Check for province matches
-                const provinceExactMatch = parts.some(part => part === provinceLower);
-                const provincePartialMatch = parts.some(part => 
-                    provinceLower.includes(part) || part.includes(provinceLower)
-                );
-                
-                if (provinceExactMatch || provincePartialMatch) {
-                    matches.provinces.push({
+                for (const city of cities) {
+                    const cityLower = city.toLowerCase();
+                    if (!cityMap[cityLower]) {
+                        cityMap[cityLower] = [];
+                    }
+                    cityMap[cityLower].push({
                         islandGroup,
                         region,
                         province,
-                        score: provinceExactMatch ? 100 : 50
+                        city
                     });
-                }
-                
-                // Check for city matches
-                for (const city of cities) {
-                    const cityLower = city.toLowerCase();
+                    
+                    // Also add a version without "City" suffix
                     const cityWithoutSuffix = cityLower.replace(/\s+city$/, '');
-                    
-                    const exactMatch = parts.some(part => part === cityLower || part === cityWithoutSuffix);
-                    const partialMatch = parts.some(part => {
-                        if (part.length >= 3 && (cityLower.includes(part) || part.includes(cityLower))) {
-                            if (part === "city") return false;
-                            return true;
+                    if (cityWithoutSuffix !== cityLower) {
+                        if (!cityMap[cityWithoutSuffix]) {
+                            cityMap[cityWithoutSuffix] = [];
                         }
-                        return false;
-                    });
-                    
-                    if (exactMatch || partialMatch) {
-                        matches.cities.push({
+                        cityMap[cityWithoutSuffix].push({
                             islandGroup,
                             region,
                             province,
-                            city,
-                            score: exactMatch ? 100 : 50
+                            city
                         });
                     }
                 }
@@ -824,45 +853,178 @@ function processAddress(addressText) {
         }
     }
     
-    // Rest of the function remains the same
+    // Array to hold potential matches with scores
+    const matches = [];
     
-    // Sort matches by score (highest first)
-    matches.cities.sort((a, b) => b.score - a.score);
-    matches.provinces.sort((a, b) => b.score - a.score);
+    // PHASE 1: If we have a comma-separated format, trust it more
+    if (hasCommaFormat) {
+        // Typically the format would be "City, Province" or "Municipality, Province"
+        const possibleCity = segments[0];
+        const possibleProvince = segments[1];
+        
+        // Look for exact city match first
+        const exactCityMatches = cityMap[possibleCity.toLowerCase()];
+        if (exactCityMatches) {
+            // We found cities with this exact name
+            for (const match of exactCityMatches) {
+                // If province is also specified, check if it matches
+                if (possibleProvince && match.province.toLowerCase().includes(possibleProvince.toLowerCase())) {
+                    // Best case: exact city and province match
+                    matches.push({...match, score: 200}); // Higher score for this perfect match
+                } else {
+                    // Just city match
+                    matches.push({...match, score: 150});
+                }
+            }
+        }
+        
+        // If we didn't find exact matches, try partial matching on the city
+        if (matches.length === 0) {
+            // Search through all city keys for partial matches
+            for (const cityKey in cityMap) {
+                if (cityKey.includes(possibleCity.toLowerCase()) || 
+                    possibleCity.toLowerCase().includes(cityKey)) {
+                    
+                    for (const match of cityMap[cityKey]) {
+                        // If province is specified, check if it matches
+                        if (possibleProvince && match.province.toLowerCase().includes(possibleProvince.toLowerCase())) {
+                            matches.push({...match, score: 120}); // Good score for partial match with province
+                        } else {
+                            matches.push({...match, score: 80}); // Lower score for just partial city match
+                        }
+                    }
+                }
+            }
+        }
+    }
     
-    console.log('Matched cities:', matches.cities);
-    console.log('Matched provinces:', matches.provinces);
+    // PHASE 2: If we don't have good matches yet or no comma format, process word by word
+    if (matches.length === 0 || !hasCommaFormat) {
+        // Split into individual words
+        const words = locationText.split(/\s+/).map(word => word.toLowerCase().trim()).filter(w => w);
+        
+        // Try to find multi-word city names first (like "San Fernando")
+        for (let i = 0; i < words.length - 1; i++) {
+            for (let j = i + 1; j <= Math.min(i + 3, words.length); j++) {
+                const possibleCity = words.slice(i, j).join(' ');
+                
+                // Check for exact city match
+                if (cityMap[possibleCity]) {
+                    for (const match of cityMap[possibleCity]) {
+                        // Try to find province mention in remaining words
+                        const otherWords = [...words.slice(0, i), ...words.slice(j)];
+                        const hasProvinceMatch = otherWords.some(word => 
+                            match.province.toLowerCase().includes(word) || word.includes(match.province.toLowerCase())
+                        );
+                        
+                        if (hasProvinceMatch) {
+                            matches.push({...match, score: 180});
+                        } else {
+                            matches.push({...match, score: 120});
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Then check for single-word cities (if we haven't found good matches yet)
+        if (matches.filter(m => m.score > 100).length === 0) {
+            for (const word of words) {
+                if (word.length < 3 || word === 'city') continue; // Skip very short words or generic terms
+                
+                // Check for exact city match
+                if (cityMap[word]) {
+                    for (const match of cityMap[word]) {
+                        // Try to find province match in other words
+                        const hasProvinceMatch = words.some(w => 
+                            w !== word && (
+                                match.province.toLowerCase().includes(w) || 
+                                w.includes(match.province.toLowerCase())
+                            )
+                        );
+                        
+                        if (hasProvinceMatch) {
+                            matches.push({...match, score: 150});
+                        } else {
+                            matches.push({...match, score: 100});
+                        }
+                    }
+                }
+                
+                // Check for partial city matches
+                for (const cityKey in cityMap) {
+                    // Skip if the key is too short or just "city"
+                    if (cityKey.length < 3 || cityKey === 'city') continue; 
+                    
+                    // Only match if there's substantial overlap
+                    const keyParts = cityKey.split(/\s+/);
+                    if (keyParts.some(part => part === word) || 
+                        (word.length >= 5 && cityKey.includes(word)) ||
+                        (word.length >= 6 && word.includes(cityKey))) {
+                        
+                        for (const match of cityMap[cityKey]) {
+                            // Check for province match in other words
+                            const hasProvinceMatch = words.some(w => 
+                                w !== word && (
+                                    match.province.toLowerCase().includes(w) || 
+                                    w.includes(match.province.toLowerCase())
+                                )
+                            );
+                            
+                            // Score based on match quality and province context
+                            if (hasProvinceMatch) {
+                                matches.push({...match, score: 90});
+                            } else {
+                                matches.push({...match, score: 50});
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     
-    // Choose the best city match if available
-    if (matches.cities.length > 0) {
-        const bestMatch = matches.cities[0];
+    // PHASE 3: If we still don't have matches, try province matching
+    if (matches.length === 0) {
+        const words = locationText.split(/\s+/).map(word => word.toLowerCase().trim()).filter(w => w);
+        
+        for (const provinceName in provinceMap) {
+            // Check for province mentions
+            const hasProvinceMatch = words.some(word => 
+                provinceName.includes(word) || word.includes(provinceName)
+            );
+            
+            if (hasProvinceMatch) {
+                const provinceMatches = provinceMap[provinceName];
+                for (const provinceMatch of provinceMatches) {
+                    // We'll use these province matches if we can't find city matches
+                    matches.push({
+                        islandGroup: provinceMatch.islandGroup,
+                        region: provinceMatch.region,
+                        province: provinceMatch.province,
+                        score: 40
+                    });
+                }
+            }
+        }
+    }
+    
+    // Sort matches by score descending
+    matches.sort((a, b) => b.score - a.score);
+    console.log('Potential matches:', matches);
+    
+    // Use the best match
+    if (matches.length > 0) {
+        const bestMatch = matches[0];
         result.islandGroup = bestMatch.islandGroup;
         result.region = bestMatch.region;
         result.province = bestMatch.province;
-        result.city = bestMatch.city;
-    } 
-    // Otherwise use the province match
-    else if (matches.provinces.length > 0) {
-        const bestMatch = matches.provinces[0];
-        result.islandGroup = bestMatch.islandGroup;
-        result.region = bestMatch.region;
-        result.province = bestMatch.province;
+        if (bestMatch.city) result.city = bestMatch.city;
     }
     
     console.log('Final detection result:', result);
     
-    // Fill in the PWD ID field if detected
-    if (result.pwdId) {
-        const pwdIdInput = document.getElementById('pwd-id');
-        if (pwdIdInput) {
-            pwdIdInput.value = result.pwdId;
-        }
-    }
-    
-    // Fill in the dropdowns based on the results (rest of the function stays the same)
-    // ...
-    
-    // Continue with existing code to fill dropdowns
+    // Continue with filling the form fields (unchanged)
     if (result.islandGroup) {
         const islandGroupButton = document.getElementById('island-group-button');
         islandGroupButton.textContent = result.islandGroup;
@@ -930,4 +1092,150 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Add speech recognition functionality
     addAddressSpeechRecognition();
+    
+    // Add speech recognition for PWD ID
+    addPwdIdSpeechRecognition();
+    
+    // Since the validation container is initially hidden, we also need to set up an observer
+    // to add the speech recognition when it becomes visible
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.target.id === 'validation-container' && 
+                !mutation.target.classList.contains('hidden') &&
+                !document.getElementById('speak-pwdid')) {
+                // Only call if the microphone button doesn't already exist
+                addPwdIdSpeechRecognition();
+            }
+        });
+    });
+    
+    const validationContainer = document.getElementById('validation-container');
+    if (validationContainer) {
+        observer.observe(validationContainer, { 
+            attributes: true,   
+            attributeFilter: ['class'] 
+        });
+    }
+});
+
+// Add this function to add speech recognition for PWD ID input
+
+function addPwdIdSpeechRecognition() {
+    // Check if the validation container exists
+    const validationContainer = document.getElementById('validation-container');
+    if (!validationContainer) return;
+    
+    // Check if we've already set up speech recognition for this field
+    if (document.getElementById('speak-pwdid')) return;
+    
+    // Find the PWD ID input field
+    const pwdIdInput = document.getElementById('pwd-id');
+    if (!pwdIdInput) return;
+    
+    // Create a wrapper for the input field to position the microphone button
+    const wrapper = document.createElement('div');
+    wrapper.className = 'relative flex-1';
+    
+    // Clone the original input with all its attributes and event listeners
+    const newInput = pwdIdInput.cloneNode(true);
+    
+    // Replace the input with our wrapper containing the cloned input
+    pwdIdInput.parentNode.replaceChild(wrapper, pwdIdInput);
+    wrapper.appendChild(newInput);
+    
+    // Create the microphone button
+    const micButton = document.createElement('button');
+    micButton.id = 'speak-pwdid';
+    micButton.type = 'button';
+    micButton.className = 'absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold p-1 rounded-full';
+    micButton.innerHTML = `
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"/>
+        </svg>
+    `;
+    
+    // Add the button to the wrapper
+    wrapper.appendChild(micButton);
+    
+    // Create recording indicator
+    const recordingIndicator = document.createElement('div');
+    recordingIndicator.id = 'pwdid-recording-indicator';
+    recordingIndicator.className = 'hidden mt-1 text-sm flex items-center';
+    recordingIndicator.innerHTML = '<span class="animate-pulse text-red-600 mr-1">●</span> Recording...';
+    
+    // Add the indicator after the wrapper
+    wrapper.parentNode.insertBefore(recordingIndicator, wrapper.nextSibling);
+    
+    // Set up speech recognition
+    if ('webkitSpeechRecognition' in window) {
+        const recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-PH';
+        
+        let recognizing = false;
+        
+        micButton.addEventListener('click', () => {
+            if (recognizing) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        });
+        
+        recognition.onstart = () => {
+            recognizing = true;
+            recordingIndicator.classList.remove('hidden');
+        };
+        
+        recognition.onend = () => {
+            recognizing = false;
+            recordingIndicator.classList.add('hidden');
+        };
+        
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript.trim();
+            console.log('PWD ID Recognition result:', transcript);
+            
+            // Extract just the numbers from the transcript
+            const numbersOnly = transcript.replace(/[^0-9]/g, '');
+            
+            // If we have digits, use them as ID
+            if (numbersOnly.length > 0) {
+                newInput.value = numbersOnly;
+                console.log('Setting PWD ID to numbers:', numbersOnly);
+            } else {
+                // Otherwise use the raw transcript
+                newInput.value = transcript;
+                console.log('Setting PWD ID to transcript:', transcript);
+            }
+            
+            // Ensure the change is recognized by triggering an input event
+            const inputEvent = new Event('input', { bubbles: true });
+            newInput.dispatchEvent(inputEvent);
+        };
+        
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error', event.error);
+            recognizing = false;
+            recordingIndicator.classList.add('hidden');
+        };
+    }
+}
+
+// Also modify the observer to ensure it doesn't keep adding microphones
+document.addEventListener('DOMContentLoaded', () => {
+    // Keep existing code...
+    
+    // Modified observer to avoid duplicate initialization
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.target.id === 'validation-container' && 
+                !mutation.target.classList.contains('hidden') &&
+                !document.getElementById('speak-pwdid')) {
+                // Only call if the microphone button doesn't already exist
+                addPwdIdSpeechRecognition();
+            }
+        });
+    });
 });
