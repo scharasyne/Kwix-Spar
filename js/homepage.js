@@ -600,7 +600,7 @@ function addAddressSpeechRecognition() {
             <input 
                 type="text" 
                 id="address-input" 
-                placeholder="Say or type your location and PWD ID (e.g. 'Argao, Cebu, PWD ID 12345678')" 
+                placeholder="Say or type your location (e.g. 'Makati City')" 
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
             <button 
@@ -756,39 +756,16 @@ function processAddress(addressText) {
         islandGroup: null,
         region: null,
         province: null,
-        city: null,
-        pwdId: null
+        city: null
     };
     
     // Clean and normalize the input
     const cleanInput = addressText.toLowerCase().trim();
     
-    // Extract PWD ID (same as before)
-    const pwdIdPatterns = [
-        /\b(?:pwd\s*id|pwd|id)\s*(?:number|#|no\.?)?\s*:?\s*(\d{5,12})\b/i,
-        /\b(\d{5,12})\s*(?:pwd\s*id|pwd|id)\b/i,
-        /\b(?:pwd|id)\s*(?:number|#|no\.?)?\s*(?:is|:)?\s*(\d{5,12})\b/i
-    ];
+    // Remove common filler words
+    const locationText = cleanInput.replace(/\bphilippines\b|\bph\b/gi, '').trim();
     
-    for (const pattern of pwdIdPatterns) {
-        const match = cleanInput.match(pattern);
-        if (match && match[1]) {
-            result.pwdId = match[1];
-            break;
-        }
-    }
-    
-    // Remove PWD ID part from the text
-    let locationText = cleanInput;
-    if (result.pwdId) {
-        locationText = cleanInput.replace(/\b(?:pwd\s*id|pwd|id)\s*(?:number|#|no\.?)?\s*:?\s*\d{5,12}\b/ig, '')
-                               .replace(/\b\d{5,12}\s*(?:pwd\s*id|pwd|id)\b/ig, '')
-                               .replace(/\b(?:pwd|id)\s*(?:number|#|no\.?)?\s*(?:is|:)?\s*\d{5,12}\b/ig, '')
-                               .trim();
-    }
-    
-    // Improved location extraction
-    // First split by common delimiters
+    // Split by common delimiters
     const parts = locationText.split(/,|\s+/).map(part => part.trim().toLowerCase()).filter(part => part);
     
     // Create a scoring system for matches
@@ -797,16 +774,15 @@ function processAddress(addressText) {
         provinces: []
     };
     
-    // IMPROVED APPROACH: First pass - look for exact matches
+    // Look for matches in the locationData
     for (const islandGroup in locationData) {
         for (const region in locationData[islandGroup]) {
             for (const province in locationData[islandGroup][region]) {
                 const cities = locationData[islandGroup][region][province];
                 
                 const provinceLower = province.toLowerCase();
-                // Check for exact province match
+                // Check for province matches
                 const provinceExactMatch = parts.some(part => part === provinceLower);
-                // Check for partial province match
                 const provincePartialMatch = parts.some(part => 
                     provinceLower.includes(part) || part.includes(provinceLower)
                 );
@@ -823,19 +799,12 @@ function processAddress(addressText) {
                 // Check for city matches
                 for (const city of cities) {
                     const cityLower = city.toLowerCase();
-                    // Handle "City" suffix specially to prevent false positives
                     const cityWithoutSuffix = cityLower.replace(/\s+city$/, '');
                     
-                    // Check for exact match
                     const exactMatch = parts.some(part => part === cityLower || part === cityWithoutSuffix);
-                    
-                    // Check for partial match (with higher threshold)
                     const partialMatch = parts.some(part => {
-                        // Only count partial match if it's substantial (>50% of the city name)
                         if (part.length >= 3 && (cityLower.includes(part) || part.includes(cityLower))) {
-                            // Avoid matching city suffixes alone (like just "City")
                             if (part === "city") return false;
-                            // For longer matches, score based on match length
                             return true;
                         }
                         return false;
@@ -847,7 +816,6 @@ function processAddress(addressText) {
                             region,
                             province,
                             city,
-                            // Score based on match quality and whether it's an exact match
                             score: exactMatch ? 100 : 50
                         });
                     }
@@ -855,6 +823,8 @@ function processAddress(addressText) {
             }
         }
     }
+    
+    // Rest of the function remains the same
     
     // Sort matches by score (highest first)
     matches.cities.sort((a, b) => b.score - a.score);
