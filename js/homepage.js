@@ -1239,3 +1239,182 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// Add local storage functionality to save and restore form values
+
+// Save form values to localStorage
+function saveToLocalStorage() {
+    const formData = {
+        islandGroup: document.getElementById('island-group-button').textContent,
+        region: document.getElementById('region-button').textContent,
+        province: document.getElementById('province-input')?.value || '',
+        city: document.getElementById('city-input')?.value || '',
+        pwdId: document.getElementById('pwd-id')?.value || ''
+    };
+    
+    // Only save if at least the island group has been selected
+    if (formData.islandGroup !== 'Select Island Group') {
+        localStorage.setItem('kwixSparLocationData', JSON.stringify(formData));
+        console.log('Form data saved to localStorage:', formData);
+    }
+}
+
+// Load form values from localStorage
+function loadFromLocalStorage() {
+    const savedData = localStorage.getItem('kwixSparLocationData');
+    if (!savedData) return;
+    
+    try {
+        const formData = JSON.parse(savedData);
+        console.log('Loading saved data from localStorage:', formData);
+        
+        // Only proceed if we have valid data
+        if (!formData.islandGroup || formData.islandGroup === 'Select Island Group') return;
+        
+        // Set island group
+        const islandGroupButton = document.getElementById('island-group-button');
+        islandGroupButton.textContent = formData.islandGroup;
+        
+        // Show and populate region
+        document.getElementById('region-container').classList.remove('hidden');
+        if (formData.region && formData.region !== 'Select Region') {
+            const regionButton = document.getElementById('region-button');
+            regionButton.textContent = formData.region;
+            
+            // Show province container
+            document.getElementById('province-container').classList.remove('hidden');
+            
+            // Set up province dropdown
+            const provinces = Object.keys(locationData[formData.islandGroup][formData.region]).sort();
+            setupSearchableDropdown(
+                'province-container',
+                'province-input',
+                'province-dropdown',
+                provinces,
+                (selectedProvince) => {
+                    document.getElementById('city-container').classList.remove('hidden');
+                    const cities = locationData[formData.islandGroup][formData.region][selectedProvince].sort();
+                    setupSearchableDropdown(
+                        'city-container',
+                        'city-input',
+                        'city-dropdown',
+                        cities,
+                        () => {
+                            document.getElementById('validation-container').classList.remove('hidden');
+                        }
+                    );
+                }
+            );
+            
+            // Set province value
+            if (formData.province) {
+                setTimeout(() => {
+                    const provinceInput = document.getElementById('province-input');
+                    provinceInput.value = formData.province;
+                    
+                    // Show city container
+                    document.getElementById('city-container').classList.remove('hidden');
+                    
+                    // Set up city dropdown
+                    const cities = locationData[formData.islandGroup][formData.region][formData.province].sort();
+                    setupSearchableDropdown(
+                        'city-container',
+                        'city-input',
+                        'city-dropdown',
+                        cities,
+                        () => {
+                            document.getElementById('validation-container').classList.remove('hidden');
+                        }
+                    );
+                    
+                    // Set city value
+                    if (formData.city) {
+                        setTimeout(() => {
+                            const cityInput = document.getElementById('city-input');
+                            cityInput.value = formData.city;
+                            
+                            // Show validation container
+                            document.getElementById('validation-container').classList.remove('hidden');
+                            
+                            // Set PWD ID if available
+                            if (formData.pwdId) {
+                                setTimeout(() => {
+                                    const pwdIdInput = document.getElementById('pwd-id');
+                                    if (pwdIdInput) pwdIdInput.value = formData.pwdId;
+                                }, 100);
+                            }
+                        }, 100);
+                    }
+                }, 100);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading data from localStorage:', error);
+    }
+}
+
+// Set up event listeners to save data on change
+function setupLocalStorageEvents() {
+    // Save when island group changes
+    document.getElementById('island-group-dropdown').addEventListener('click', (e) => {
+        if (e.target.tagName === 'A') {
+            setTimeout(saveToLocalStorage, 100);
+        }
+    });
+    
+    // Save when region changes
+    document.getElementById('region-dropdown').addEventListener('click', (e) => {
+        if (e.target.tagName === 'A') {
+            setTimeout(saveToLocalStorage, 100);
+        }
+    });
+    
+    // Save when province changes (input and selection)
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#province-dropdown')) {
+            setTimeout(saveToLocalStorage, 100);
+        }
+    });
+    
+    document.getElementById('province-input')?.addEventListener('change', () => {
+        saveToLocalStorage();
+    });
+    
+    // Save when city changes
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#city-dropdown')) {
+            setTimeout(saveToLocalStorage, 100);
+        }
+    });
+    
+    document.getElementById('city-input')?.addEventListener('change', () => {
+        saveToLocalStorage();
+    });
+    
+    // Save when PWD ID changes
+    document.getElementById('pwd-id')?.addEventListener('input', () => {
+        saveToLocalStorage();
+    });
+    
+    // Save when address is processed
+    document.getElementById('search-address')?.addEventListener('click', () => {
+        setTimeout(saveToLocalStorage, 500); // Wait for processing to complete
+    });
+    
+    // Clear storage when fields are cleared
+    document.getElementById('clear-fields')?.addEventListener('click', () => {
+        localStorage.removeItem('kwixSparLocationData');
+        console.log('Form data removed from localStorage');
+    });
+}
+
+// Add this to the DOMContentLoaded event
+document.addEventListener('DOMContentLoaded', () => {
+    // Existing initialization code...
+    
+    // Set up local storage
+    setupLocalStorageEvents();
+    
+    // Load saved data (after a slight delay to ensure all elements are ready)
+    setTimeout(loadFromLocalStorage, 200);
+});
