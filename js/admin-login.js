@@ -1,31 +1,63 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Populate regions
-    const regions = [
-        'NCR - National Capital Region',
-        'CAR - Cordillera Administrative Region',
-        'Region I - Ilocos Region',
-        'Region II - Cagayan Valley',
-        'Region III - Central Luzon',
-        'Region IV-A - CALABARZON',
-        'Region IV-B - MIMAROPA',
-        'Region V - Bicol Region',
-        'Region VI - Western Visayas',
-        'Region VII - Central Visayas',
-        'Region VIII - Eastern Visayas',
-        'Region IX - Zamboanga Peninsula',
-        'Region X - Northern Mindanao',
-        'Region XI - Davao Region',
-        'Region XII - SOCCSKSARGEN',
-        'Region XIII - Caraga',
-        'BARMM - Bangsamoro Autonomous Region in Muslim Mindanao'
-    ];
-
     const regionSelect = document.getElementById('region');
-    regions.forEach(region => {
+    const provinceSelect = document.getElementById('province');
+    const citySelect = document.getElementById('city');
+    
+    // Complete hierarchy data
+    const regions = {
+        'NCR - National Capital Region': {
+            'Metro Manila': ['Quezon City', 'Manila', 'Makati', 'Pasig', 'Taguig']
+        },
+        'CAR - Cordillera Administrative Region': {
+            'Benguet': ['Baguio City', 'La Trinidad', 'Itogon', 'Sablan', 'Tuba']
+        },
+        'BARMM - Bangsamoro Autonomous Region in Muslim Mindanao': {
+            'Basilan': ['Lamitan', 'Isabela City', 'Tipo-Tipo', 'Tuburan', 'Maluso']
+        }
+    };
+
+    // Populate regions
+    Object.keys(regions).forEach(region => {
         const option = document.createElement('option');
         option.value = region;
         option.textContent = region;
         regionSelect.appendChild(option);
+    });
+
+    // Handle region selection
+    regionSelect.addEventListener('change', function() {
+        provinceSelect.innerHTML = '<option value="">Select Province</option>';
+        citySelect.innerHTML = '<option value="">Select City/Municipality</option>';
+        provinceSelect.disabled = true;
+        citySelect.disabled = true;
+
+        if (this.value) {
+            const provinces = regions[this.value];
+            Object.keys(provinces).forEach(province => {
+                const option = document.createElement('option');
+                option.value = province;
+                option.textContent = province;
+                provinceSelect.appendChild(option);
+            });
+            provinceSelect.disabled = false;
+        }
+    });
+
+    // Handle province selection
+    provinceSelect.addEventListener('change', function() {
+        citySelect.innerHTML = '<option value="">Select City/Municipality</option>';
+        citySelect.disabled = true;
+
+        if (this.value && regionSelect.value) {
+            const cities = regions[regionSelect.value][this.value];
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            });
+            citySelect.disabled = false;
+        }
     });
 
     // Handle form submission

@@ -1,0 +1,670 @@
+[04-Mar-2025 12:38:57 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\Kwix-Spar\php\check-auth.php on line 2
+[04-Mar-2025 12:38:57 Europe/Berlin] Database connection successful
+[04-Mar-2025 12:38:57 Europe/Berlin] POST data received: Array
+(
+    [pwd_id] => 2023
+    [first_name] => hi
+    [last_name] => hello
+    [city] => Lamitan
+    [disability_type] => Physical
+    [expiry_date] => 2026-01-01
+    [birth_date] => 2001-01-01
+    [gender] => Female
+    [address] => adsfasdf
+)
+
+[04-Mar-2025 12:38:57 Europe/Berlin] FILES data received: Array
+(
+    [medical_certificate] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpB792.tmp
+            [error] => 0
+            [size] => 28984
+        )
+
+    [barangay_certification] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpB793.tmp
+            [error] => 0
+            [size] => 26159
+        )
+
+    [id_picture] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo.png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpB794.tmp
+            [error] => 0
+            [size] => 37739
+        )
+
+    [additional_documents] => Array
+        (
+            [name] => Array
+                (
+                    [0] => 
+                )
+
+            [full_path] => Array
+                (
+                    [0] => 
+                )
+
+            [type] => Array
+                (
+                    [0] => 
+                )
+
+            [tmp_name] => Array
+                (
+                    [0] => 
+                )
+
+            [error] => Array
+                (
+                    [0] => 4
+                )
+
+            [size] => Array
+                (
+                    [0] => 0
+                )
+
+        )
+
+)
+
+[04-Mar-2025 12:38:57 Europe/Berlin] Error saving PWD record: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '2023' for key 'pwd_id_number'
+[04-Mar-2025 12:38:57 Europe/Berlin] Stack trace: #0 C:\xampp\htdocs\Kwix-Spar\php\save-pwd-record.php(73): PDOStatement->execute(Array)
+#1 {main}
+[04-Mar-2025 12:40:34 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\Kwix-Spar\php\check-auth.php on line 2
+[04-Mar-2025 12:40:34 Europe/Berlin] Database connection successful
+[04-Mar-2025 12:40:34 Europe/Berlin] POST data received: Array
+(
+    [pwd_id] => 2023
+    [first_name] => hi
+    [last_name] => hello
+    [city] => Lamitan
+    [disability_type] => Mental
+    [expiry_date] => 2026-01-01
+    [birth_date] => 2001-01-01
+    [gender] => Female
+    [address] => asdffdafasd
+)
+
+[04-Mar-2025 12:40:34 Europe/Berlin] FILES data received: Array
+(
+    [medical_certificate] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php3319.tmp
+            [error] => 0
+            [size] => 28984
+        )
+
+    [barangay_certification] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php331A.tmp
+            [error] => 0
+            [size] => 26159
+        )
+
+    [id_picture] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo.png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php331B.tmp
+            [error] => 0
+            [size] => 37739
+        )
+
+    [additional_documents] => Array
+        (
+            [name] => Array
+                (
+                    [0] => 
+                )
+
+            [full_path] => Array
+                (
+                    [0] => 
+                )
+
+            [type] => Array
+                (
+                    [0] => 
+                )
+
+            [tmp_name] => Array
+                (
+                    [0] => 
+                )
+
+            [error] => Array
+                (
+                    [0] => 4
+                )
+
+            [size] => Array
+                (
+                    [0] => 0
+                )
+
+        )
+
+)
+
+[04-Mar-2025 12:40:34 Europe/Berlin] Error saving PWD record: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '2023' for key 'pwd_id_number'
+[04-Mar-2025 12:40:34 Europe/Berlin] Stack trace: #0 C:\xampp\htdocs\Kwix-Spar\php\save-pwd-record.php(78): PDOStatement->execute(Array)
+#1 {main}
+[04-Mar-2025 12:40:40 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\Kwix-Spar\php\check-auth.php on line 2
+[04-Mar-2025 12:40:40 Europe/Berlin] Database connection successful
+[04-Mar-2025 12:40:40 Europe/Berlin] POST data received: Array
+(
+    [pwd_id] => 2023
+    [first_name] => hi
+    [last_name] => hello
+    [city] => Lamitan
+    [disability_type] => Mental
+    [expiry_date] => 2026-01-01
+    [birth_date] => 2001-01-01
+    [gender] => Female
+    [address] => asdffdafasd
+)
+
+[04-Mar-2025 12:40:40 Europe/Berlin] FILES data received: Array
+(
+    [medical_certificate] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php4A8C.tmp
+            [error] => 0
+            [size] => 28984
+        )
+
+    [barangay_certification] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php4A8D.tmp
+            [error] => 0
+            [size] => 26159
+        )
+
+    [id_picture] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo.png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php4A8E.tmp
+            [error] => 0
+            [size] => 37739
+        )
+
+    [additional_documents] => Array
+        (
+            [name] => Array
+                (
+                    [0] => 
+                )
+
+            [full_path] => Array
+                (
+                    [0] => 
+                )
+
+            [type] => Array
+                (
+                    [0] => 
+                )
+
+            [tmp_name] => Array
+                (
+                    [0] => 
+                )
+
+            [error] => Array
+                (
+                    [0] => 4
+                )
+
+            [size] => Array
+                (
+                    [0] => 0
+                )
+
+        )
+
+)
+
+[04-Mar-2025 12:40:40 Europe/Berlin] Error saving PWD record: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '2023' for key 'pwd_id_number'
+[04-Mar-2025 12:40:40 Europe/Berlin] Stack trace: #0 C:\xampp\htdocs\Kwix-Spar\php\save-pwd-record.php(78): PDOStatement->execute(Array)
+#1 {main}
+[04-Mar-2025 12:42:40 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\Kwix-Spar\php\check-auth.php on line 2
+[04-Mar-2025 12:42:40 Europe/Berlin] POST data: Array
+(
+    [pwd_id] => 2023
+    [first_name] => hi
+    [last_name] => hello
+    [city] => hillo
+    [disability_type] => Mental
+    [expiry_date] => 2001-01-01
+    [birth_date] => 2000-01-01
+    [gender] => Male
+    [address] => dasdasda
+)
+
+[04-Mar-2025 12:42:40 Europe/Berlin] FILES data: Array
+(
+    [medical_certificate] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php1DF8.tmp
+            [error] => 0
+            [size] => 28984
+        )
+
+    [barangay_certification] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php1DF9.tmp
+            [error] => 0
+            [size] => 26159
+        )
+
+    [id_picture] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo.png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php1DFA.tmp
+            [error] => 0
+            [size] => 37739
+        )
+
+    [additional_documents] => Array
+        (
+            [name] => Array
+                (
+                    [0] => 
+                )
+
+            [full_path] => Array
+                (
+                    [0] => 
+                )
+
+            [type] => Array
+                (
+                    [0] => 
+                )
+
+            [tmp_name] => Array
+                (
+                    [0] => 
+                )
+
+            [error] => Array
+                (
+                    [0] => 4
+                )
+
+            [size] => Array
+                (
+                    [0] => 0
+                )
+
+        )
+
+)
+
+[04-Mar-2025 12:42:40 Europe/Berlin] Error: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '2023' for key 'pwd_id_number'
+[04-Mar-2025 12:46:38 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\Kwix-Spar\php\check-auth.php on line 2
+[04-Mar-2025 12:46:38 Europe/Berlin] POST data: Array
+(
+    [pwd_id] => 2023
+    [first_name] => hi
+    [last_name] => hello
+    [city] => Lamitan
+    [disability_type] => Multiple
+    [expiry_date] => 2001-01-01
+    [birth_date] => 2000-01-01
+    [gender] => Male
+    [address] => asddsa
+)
+
+[04-Mar-2025 12:46:38 Europe/Berlin] FILES data: Array
+(
+    [medical_certificate] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpC1AE.tmp
+            [error] => 0
+            [size] => 28984
+        )
+
+    [barangay_certification] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpC1AF.tmp
+            [error] => 0
+            [size] => 26159
+        )
+
+    [id_picture] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo.png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpC1B0.tmp
+            [error] => 0
+            [size] => 37739
+        )
+
+    [additional_documents] => Array
+        (
+            [name] => Array
+                (
+                    [0] => 
+                )
+
+            [full_path] => Array
+                (
+                    [0] => 
+                )
+
+            [type] => Array
+                (
+                    [0] => 
+                )
+
+            [tmp_name] => Array
+                (
+                    [0] => 
+                )
+
+            [error] => Array
+                (
+                    [0] => 4
+                )
+
+            [size] => Array
+                (
+                    [0] => 0
+                )
+
+        )
+
+)
+
+[04-Mar-2025 12:46:39 Europe/Berlin] Error: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '2023' for key 'pwd_id_number'
+[04-Mar-2025 12:46:48 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\Kwix-Spar\php\check-auth.php on line 2
+[04-Mar-2025 12:46:48 Europe/Berlin] POST data: Array
+(
+    [pwd_id] => 2024
+    [first_name] => hi
+    [last_name] => hello
+    [city] => Lamitan
+    [disability_type] => Multiple
+    [expiry_date] => 2001-01-01
+    [birth_date] => 2000-01-01
+    [gender] => Male
+    [address] => asddsa
+)
+
+[04-Mar-2025 12:46:48 Europe/Berlin] FILES data: Array
+(
+    [medical_certificate] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpE670.tmp
+            [error] => 0
+            [size] => 28984
+        )
+
+    [barangay_certification] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpE671.tmp
+            [error] => 0
+            [size] => 26159
+        )
+
+    [id_picture] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo.png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpE672.tmp
+            [error] => 0
+            [size] => 37739
+        )
+
+    [additional_documents] => Array
+        (
+            [name] => Array
+                (
+                    [0] => 
+                )
+
+            [full_path] => Array
+                (
+                    [0] => 
+                )
+
+            [type] => Array
+                (
+                    [0] => 
+                )
+
+            [tmp_name] => Array
+                (
+                    [0] => 
+                )
+
+            [error] => Array
+                (
+                    [0] => 4
+                )
+
+            [size] => Array
+                (
+                    [0] => 0
+                )
+
+        )
+
+)
+
+[04-Mar-2025 13:18:38 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\Kwix-Spar\php\check-auth.php on line 2
+[04-Mar-2025 13:18:38 Europe/Berlin] POST data: Array
+(
+    [pwd_id] => 2025
+    [first_name] => hii
+    [last_name] => helloo
+    [city] => Lamitan
+    [disability_type] => Multiple
+    [expiry_date] => 2025-01-09
+    [birth_date] => 2003-01-01
+    [gender] => Female
+    [address] => dsadasdasdadad
+)
+
+[04-Mar-2025 13:18:38 Europe/Berlin] FILES data: Array
+(
+    [medical_certificate] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpD47.tmp
+            [error] => 0
+            [size] => 28984
+        )
+
+    [barangay_certification] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpD48.tmp
+            [error] => 0
+            [size] => 26159
+        )
+
+    [id_picture] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo.png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpD49.tmp
+            [error] => 0
+            [size] => 37739
+        )
+
+    [additional_documents] => Array
+        (
+            [name] => Array
+                (
+                    [0] => 
+                )
+
+            [full_path] => Array
+                (
+                    [0] => 
+                )
+
+            [type] => Array
+                (
+                    [0] => 
+                )
+
+            [tmp_name] => Array
+                (
+                    [0] => 
+                )
+
+            [error] => Array
+                (
+                    [0] => 4
+                )
+
+            [size] => Array
+                (
+                    [0] => 0
+                )
+
+        )
+
+)
+
+[04-Mar-2025 13:19:22 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\Kwix-Spar\php\check-auth.php on line 2
+[04-Mar-2025 13:19:22 Europe/Berlin] POST data: Array
+(
+    [pwd_id] => 2026
+    [first_name] => hiii
+    [last_name] => hellooo
+    [city] => Lamitan
+    [disability_type] => Multiple
+    [expiry_date] => 2025-09-09
+    [birth_date] => 2000-01-01
+    [gender] => Male
+    [address] => dsadfasdf
+)
+
+[04-Mar-2025 13:19:22 Europe/Berlin] FILES data: Array
+(
+    [medical_certificate] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpB7A3.tmp
+            [error] => 0
+            [size] => 28984
+        )
+
+    [barangay_certification] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (1).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpB7A4.tmp
+            [error] => 0
+            [size] => 26159
+        )
+
+    [id_picture] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo.png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpB7A5.tmp
+            [error] => 0
+            [size] => 37739
+        )
+
+    [additional_documents] => Array
+        (
+            [name] => Array
+                (
+                    [0] => 
+                )
+
+            [full_path] => Array
+                (
+                    [0] => 
+                )
+
+            [type] => Array
+                (
+                    [0] => 
+                )
+
+            [tmp_name] => Array
+                (
+                    [0] => 
+                )
+
+            [error] => Array
+                (
+                    [0] => 4
+                )
+
+            [size] => Array
+                (
+                    [0] => 0
+                )
+
+        )
+
+)
+
