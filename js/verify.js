@@ -7,29 +7,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultsContainer = document.getElementById('results-container');
     const loadingIndicator = document.getElementById('loading');
     
-    dropArea.addEventListener('click', () => {
-        fileInput.click();
-    });
+    initializeEventListeners();
     
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, preventDefaults, false);
-    });
+    function initializeEventListeners() {
+        dropArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        dropArea.addEventListener('dragenter', () => {
+            dropArea.classList.add('border-blue-500');
+        });
+        
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('border-blue-500');
+        });
+        
+        dropArea.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+        
+        // Process the ID image
+        processButton.addEventListener('click', processImage);
+    }
     
     function preventDefaults(e) {
         e.preventDefault();
         e.stopPropagation();
     }
-    
-    dropArea.addEventListener('dragenter', () => {
-        dropArea.classList.add('border-blue-500');
-    });
-    
-    dropArea.addEventListener('dragleave', () => {
-        dropArea.classList.remove('border-blue-500');
-    });
-    
-    dropArea.addEventListener('drop', handleDrop);
-    fileInput.addEventListener('change', handleFileSelect);
     
     function handleDrop(e) {
         const dt = e.dataTransfer;
@@ -47,7 +54,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (files.length > 0) {
             const file = files[0];
             
-            // Display preview
             const reader = new FileReader();
             reader.onload = function(e) {
                 previewImage.src = e.target.result;
@@ -58,9 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Process the image with OCR
-    processButton.addEventListener('click', processImage);
-    
+    // Process the image with Google Cloud Vision API
     function processImage() {
         loadingIndicator.classList.remove('hidden');
         resultsContainer.classList.add('hidden');
@@ -78,25 +82,21 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            if(!data.success){
+            if (!data.success) {
                 throw new Error(data.message || 'Failed to process image');
             }
-
-            return pollForResults(data.operationLocation);
-        })
-        .then(analysisResults => {
-            const extractedInfo = extractFromAzureResponse(analysisResults);
-
+            
+            const extractedInfo = extractFromGoogleResponse(data.result);
+            
             document.getElementById('id-number').textContent = extractedInfo.idNumber || 'Not detected';
             document.getElementById('name').textContent = extractedInfo.name || 'Not detected';
-            // document.getElementById('expiry-date').textContent = extractedInfo.expiryDate || 'Not detected';
-
-            if (extractedInfo.locationInfo && extractedInfo.locationInfo.islandGroup) {
+            
+            if (extractedInfo.locationInfo && extractedInfo.locationInfo.city) {
                 setLocationFromOCR(extractedInfo.locationInfo);
             }
-
+            
             updateVerificationStatus(extractedInfo);
-
+            
             loadingIndicator.classList.add('hidden');
             resultsContainer.classList.remove('hidden');
         })
@@ -106,7 +106,146 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Error processing the image: ' + err.message);
         });
     }
+    
+    // Extract information from Google Cloud Vision API response
+    function extractFromGoogleResponse(response) {
+        try {
+            console.log("Google Vision API response:", JSON.stringify(response, null, 2));
+            
+            const result = {
+                idNumber: null,
+                name: null,
+                expiryDate: null,
+                locationInfo: {
+                    islandGroup: null,
+                    region: null,
+                    province: null,
+                    city: null
+                }
+            };
+            
+            if (response && response.responses && response.responses.length > 0) {
+                const textAnnotations = response.responses[0].textAnnotations || [];
+                
+                const fullText = response.responses[0].fullTextAnnotation?.text || '';
+                if (fullText) {
+                    console.log("Extracted full text:", fullText);
+                    
+                    const textForIdExtraction = fullText.replace(/\s+(?=\d-|-\d|\d\s+\d)/g, '');
+                    console.log("Text prepared for ID extraction:", textForIdExtraction);
 
+                    // ID number extraction patterns
+                    const idPatterns = [
+                        /(\d{7}-\d{3}-\d{4})/,
+                        /(\d[\d\s]{6,10}-\d[\d\s]{1,4}-\d[\d\s]{3,6})/,
+                        /\b(\d{10,13})\b/
+                    ];
+
+                    let idMatches = null;
+                    for (const pattern of idPatterns) {
+                        idMatches = textForIdExtraction.match(pattern) || fullText.match(pattern);
+                        if (idMatches && idMatches.length > 0) {
+                            let idNumber = idMatches[0].replace(/\s+/g, '');
+                            result.idNumber = idNumber;
+                            console.log("Extracted ID number:", result.idNumber);
+                            break;
+                        }
+                    }
+
+                    if (!result.idNumber) {
+                        const fallbackMatch = fullText.match(/\b(\d[\d\s]{7,12})\b/);
+                        if (fallbackMatch && fallbackMatch[0]) {
+                            result.idNumber = fallbackMatch[0].replace(/\s+/g, '');
+                            console.log("Found ID using length-based fallback method:", result.idNumber);
+                        }
+                    }
+
+                    const lines = fullText.split('\n');
+                    let nameIndex = -1;
+                    
+                    // Name extraction logic
+                    for (let i = 0; i < lines.length; i++) {
+                        if (/^\s*name\s*(:)?\s*$/i.test(lines[i])) {
+                            nameIndex = i;
+                            console.log(`Found name label at line ${i}: "${lines[i]}"`);
+                            break;
+                        }
+                    }
+                    
+                    if (nameIndex > 0) {
+                        const potentialName = lines[nameIndex - 1].trim();
+                        if (potentialName && 
+                            !/REPUBLIC|PHILIPPINES|DEPARTMENT|BARANGAY|CITY|VALID|COUNTY|DISABILITY|TYPE|SIGNATURE|I\.D|NO\./i.test(potentialName)) {
+                            result.name = potentialName;
+                            console.log("Found name above name label:", result.name);
+                        }
+                    }
+                    
+                    if (!result.name) {
+                        const namePatterns = [
+                            /[Nn]ame\s*:\s*([A-Za-z\s.,]+)/i,
+                            /[Ff]ull\s*[Nn]ame\s*:\s*([A-Za-z\s.,]+)/i,
+                            /[Nn]ame\s*[Oo]f\s*PWD\s*:\s*([A-Za-z\s.,]+)/i
+                        ];
+                        
+                        for (const pattern of namePatterns) {
+                            const nameMatch = fullText.match(pattern);
+                            if (nameMatch && nameMatch[1]) {
+                                result.name = nameMatch[1].trim();
+                                console.log("Extracted name from standard pattern:", result.name);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (!result.name) {
+                        for (const line of lines) {
+                            if (/REPUBLIC|PHILIPPINES|DEPARTMENT|WELFARE|VALID|COUNTY|BARANGAY|DISABILITY|TYPE|SIGNATURE|I\.D|NO\.|LUNGSOD|PILIPINAS/i.test(line)) {
+                                continue;
+                            }
+                            
+                            const cleanLine = line.trim();
+                            
+                            if (cleanLine.length < 5 || cleanLine.length > 40) continue;
+                            
+                            const wordCount = cleanLine.split(/\s+/).length;
+                            
+                            if (wordCount >= 2 && wordCount <= 4) {
+                                if (/^[A-Z][A-Z\s.]{4,}$/.test(cleanLine) || // ALL CAPS
+                                    /^[A-Z][a-z]+ ([A-Z]\. )?[A-Z][a-z]+ ?([A-Z][a-z]+)?$/.test(cleanLine)) { // Proper Case
+                                    result.name = cleanLine;
+                                    console.log("Found name by format analysis:", result.name);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    for (let line of lines) {
+                        if (/LAS PIÑAS|MANILA|QUEZON CITY|MAKATI|PASIG|TAGUIG/i.test(line)) {
+                            const cityMatch = line.match(/(LAS PIÑAS|MANILA|QUEZON CITY|MAKATI|PASIG|TAGUIG)/i);
+                            if (cityMatch) {
+                                result.locationInfo.city = cityMatch[0];
+                                console.log("Found city directly in content:", result.locationInfo.city);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            console.log("Final extracted information:", result);
+            return result;
+        } catch (err) {
+            console.error('Error extracting data from Google Vision response:', err);
+            return { 
+                idNumber: null, 
+                name: null, 
+                expiryDate: null,
+                locationInfo: { city: null } 
+            };
+        }
+    }
+    
     function setLocationFromOCR(locationInfo) {
         if (locationInfo.city) {
             const pathFound = findLocationPathByCity(locationInfo.city);
@@ -119,54 +258,57 @@ document.addEventListener('DOMContentLoaded', function() {
                 islandGroupButton.dispatchEvent(islandGroupEvent);
                 
                 setTimeout(() => {
-                    const islandDropdown = document.getElementById('island-group-dropdown');
-                    const islandOptions = islandDropdown.querySelectorAll('a');
-                    for (const option of islandOptions) {
-                        if (option.textContent === pathFound.islandGroup) {
-                            option.click();
+                    selectOption('island-group-dropdown', pathFound.islandGroup, () => {
+                        setTimeout(() => {
+                            const regionButton = document.getElementById('region-button');
+                            const regionEvent = new MouseEvent('click', {bubbles: true});
+                            regionButton.dispatchEvent(regionEvent);
                             
                             setTimeout(() => {
-                                const regionButton = document.getElementById('region-button');
-                                const regionEvent = new MouseEvent('click', {bubbles: true});
-                                regionButton.dispatchEvent(regionEvent);
-                                
-                                setTimeout(() => {
-                                    const regionDropdown = document.getElementById('region-dropdown');
-                                    const regionOptions = regionDropdown.querySelectorAll('a');
-                                    for (const option of regionOptions) {
-                                        if (option.textContent === pathFound.region) {
-                                            option.click();
-                                            
+                                selectOption('region-dropdown', pathFound.region, () => {
+                                    setTimeout(() => {
+                                        setInputValue('province-input', pathFound.province, () => {
                                             setTimeout(() => {
-                                                const provinceInput = document.getElementById('province-input');
-                                                provinceInput.value = pathFound.province;
-                                                
-                                                const inputEvent = new Event('input', {bubbles: true});
-                                                provinceInput.dispatchEvent(inputEvent);
-                                                
-                                                setTimeout(() => {
-                                                    const cityInput = document.getElementById('city-input');
-                                                    cityInput.value = pathFound.city;
-                                                    cityInput.dispatchEvent(inputEvent);
-                                                    
+                                                setInputValue('city-input', pathFound.city, () => {
                                                     document.getElementById('validation-container').classList.remove('hidden');
                                                     const pwdIdInput = document.getElementById('pwd-id');
                                                     pwdIdInput.value = locationInfo.idNumber || '';
-                                                }, 300);
+                                                });
                                             }, 300);
-                                        }
-                                    }
-                                }, 300);
+                                        });
+                                    }, 300);
+                                });
                             }, 300);
-                        }
-                    }
+                        });
+                    });
                 }, 300);
                 
                 return;
             }
         }
     }
-
+    
+    function selectOption(dropdownId, optionText, callback) {
+        const dropdown = document.getElementById(dropdownId);
+        const options = dropdown.querySelectorAll('a');
+        for (const option of options) {
+            if (option.textContent === optionText) {
+                option.click();
+                if (callback) callback();
+                return;
+            }
+        }
+        if (callback) callback();
+    }
+    
+    function setInputValue(inputId, value, callback) {
+        const input = document.getElementById(inputId);
+        input.value = value;
+        const inputEvent = new Event('input', {bubbles: true});
+        input.dispatchEvent(inputEvent);
+        if (callback) callback();
+    }
+    
     function findLocationPathByCity(cityName) {
         console.log(`Searching for city: "${cityName}" in location database...`);
         const normalizedCityName = cityName.trim().toUpperCase();
@@ -207,121 +349,11 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(`❌ No matching location found for "${cityName}"`);
         return null;
     }
-
-    function pollForResults(operationLocation, retries = 10, delay = 1000) {
-        return new Promise((resolve, reject) => {
-            let attempts = 0;
-            
-            const checkStatus = () => {
-                fetch(operationLocation, {
-                    headers: {
-                        'Ocp-Apim-Subscription-Key': '1ywJ9F2XtO5yFLJyUqhQGzZGQNQrnnrm7lAAUqqhOKH8UKBNHfcmJQQJ99BCACqBBLyXJ3w3AAALACOGakoI'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'succeeded') {
-                        resolve(data);
-                    } else if (data.status === 'failed') {
-                        reject(new Error(data.error.message));
-                    } else if (attempts < retries) {
-                        attempts++;
-                        setTimeout(checkStatus, delay);
-                    } else {
-                        reject(new Error('Operation timed out'));
-                    }
-                })
-                .catch(reject);
-            };
-            
-            checkStatus();
-        });
-    }
-
-    function extractFromAzureResponse(response) {
-        try {
-            console.log("Azure API response:", JSON.stringify(response, null, 2));
-
-            const result = {
-                idNumber: null,
-                name: null,
-                expiryDate: "N/A",
-                region: null,
-                locationInfo: {
-                    islandGroup: null,
-                    region: null,
-                    province: null,
-                    city: null
-                }
-            };
-            
-            if (response.analyzeResult && response.analyzeResult.documents) {
-                const document = response.analyzeResult.documents[0];
-                const fields = document.fields;
-                
-                // Extract name
-                if (fields.FirstName && fields.LastName) {
-                    result.name = `${fields.FirstName.valueString} ${fields.LastName.valueString}`;
-                }
-                
-                // Extract ID from OCR content
-                const content = response.analyzeResult.content;
-                const idMatches = content.match(/(\d{7}-\d{3}-\d{4})/);
-                if (idMatches && idMatches.length > 0) {
-                    result.idNumber = idMatches[0];
-                }
-
-                const lines = content.split('\n');
-                for (let line of lines) {
-                    if (/LAS PIÑAS|MANILA|QUEZON CITY|MAKATI|PASIG|TAGUIG/i.test(line)) {
-                        const cityName = line.match(/(LAS PIÑAS|MANILA|QUEZON CITY|MAKATI|PASIG|TAGUIG)/i)[0];
-                        console.log("Found city directly in content:", cityName);
-                        result.locationInfo.city = cityName;
-                    }
-                    
-                    const cityMatch = line.match(/([A-Za-z\s]+)\s+City/i);
-                    if (cityMatch && cityMatch[1]) {
-                        console.log("Found city by 'City' suffix:", cityMatch[1]);
-                        result.locationInfo.city = cityMatch[1].trim() + " City";
-                    }
-                    
-                    if (/BARANGAY/i.test(line)) {
-                        console.log("Line with BARANGAY:", line);
-                        result.locationInfo.barangayLine = line;
-                    }
-                }
-
-                if (!result.locationInfo.city && result.locationInfo.barangayLine) {
-                    // Match known cities in the barangay line
-                    const knownCities = ['Las Piñas', 'Manila', 'Quezon', 'Makati', 'Pasig', 'Taguig'];
-                    for (const city of knownCities) {
-                        if (result.locationInfo.barangayLine.toUpperCase().includes(city.toUpperCase())) {
-                            console.log(`Found city in BARANGAY line: ${city}`);
-                            result.locationInfo.city = city;
-                            break;
-                        }
-                    }
-                }
-
-                if (!result.locationInfo.city) {
-                    console.log("Trying fallback city detection...");
-                    result.locationInfo.city = "Las Piñas";
-                }
-                
-                console.log("Final extracted locationInfo:", result.locationInfo);    
-            }
-            
-            return result;
-        } catch (err) {
-            console.error('Error extracting data:', err);
-            return { idNumber: null, name: null, expiryDate: null, region: null };
-        }
-    }
     
     function updateVerificationStatus(extractedInfo) {
         const verificationStatus = document.getElementById('verification-status');
         if (extractedInfo.idNumber && extractedInfo.name) {
-            verificationStatus.textContent = 'Verification successful!';
+            verificationStatus.textContent = 'Succesfully extracted information!';
             verificationStatus.classList.add('bg-green-100', 'text-green-800');
             verificationStatus.classList.remove('bg-red-100', 'text-red-800');
         } else {
