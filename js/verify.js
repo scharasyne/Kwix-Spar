@@ -6,49 +6,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const processButton = document.getElementById('process-button');
     const resultsContainer = document.getElementById('results-container');
     const loadingIndicator = document.getElementById('loading');
-
-    const REGIONAL_ID_FORMATS = {
-        'NCR': {
-            patterns: [
-                /\b\d{9}-\d{3}\b/,           // Standard format with hyphen
-                /\b(\d{9})[\s-]*(\d{3})\b/   // NCR specific format
-            ],
-            validator: (id) => id.length === 13 && id.includes('-')
-        },
-        'LUZON': {
-            patterns: [
-                /\b\d{9}-\d{3}\b/,           // Standard format
-                /\bR\d{1}-\d{8}-\d{3}\b/,    // R1-XXXXXXXX-XXX format
-                /\bR\d{1}[\s-]*\d{8}[\s-]*\d{3}\b/
-            ],
-            validator: (id) => /^R\d{1}-\d{8}-\d{3}$/.test(id) || /^\d{9}-\d{3}$/.test(id)
-        },
-        'VISAYAS': {
-            patterns: [
-                /\b\d{4}-\d{4}-\d{4}\b/,     // XXXX-XXXX-XXXX format
-                /\bR\d{1}[-\s]*\d{12}\b/     // Region code followed by 12 digits
-            ],
-            validator: (id) => /^\d{4}-\d{4}-\d{4}$/.test(id) || /^R\d{1}-\d{12}$/.test(id)
-        },
-        'MINDANAO': {
-            patterns: [
-                /\b\d{9}-\d{3}\b/,
-                /\b\d{4}-\d{4}-\d{4}\b/,     // XXXX-XXXX-XXXX format
-                /\bPWD-\d{10}\b/             // PWD-XXXXXXXXXX format
-            ],
-            validator: (id) => id.startsWith('PWD-') || /^\d{9}-\d{3}$/.test(id)
-        },
-        // Default patterns for unknown regions
-        'DEFAULT': {
-            patterns: [
-                /\b\d{9}-\d{3}\b/,
-                /\b\d{12}\b/,
-                /\b(\d{9})[^\d\w]*(\d{3})\b/,
-                /\bPWD[\s-]*\d{10,12}\b/
-            ],
-            validator: (id) => id && id.length >= 12
-        }
-    };
     
     dropArea.addEventListener('click', () => {
         fileInput.click();
@@ -151,30 +108,104 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setLocationFromOCR(locationInfo) {
-        if (locationInfo.islandGroup) {
-            // Set island group
-            const islandGroupButton = document.getElementById('island-group-button');
-            islandGroupButton.textContent = locationInfo.islandGroup;
-            document.getElementById('region-container').classList.remove('hidden');
+        if (locationInfo.city) {
+            const pathFound = findLocationPathByCity(locationInfo.city);
             
-            // Get regions for this island group
-            const regions = Object.keys(locationData[locationInfo.islandGroup]);
-            
-            if (locationInfo.region) {
-                // Find matching region in our data
-                const matchingRegion = regions.find(r => 
-                    r.toUpperCase().includes(locationInfo.region.toUpperCase()) || 
-                    locationInfo.region.toUpperCase().includes(r.toUpperCase())
-                );
+            if (pathFound) {
+                console.log("Found location path:", pathFound);
                 
-                if (matchingRegion) {
-                    // Set region
-                    const regionButton = document.getElementById('region-button');
-                    regionButton.textContent = matchingRegion;
-                    document.getElementById('province-container').classList.remove('hidden');
+                const islandGroupButton = document.getElementById('island-group-button');
+                const islandGroupEvent = new MouseEvent('click', {bubbles: true});
+                islandGroupButton.dispatchEvent(islandGroupEvent);
+                
+                setTimeout(() => {
+                    const islandDropdown = document.getElementById('island-group-dropdown');
+                    const islandOptions = islandDropdown.querySelectorAll('a');
+                    for (const option of islandOptions) {
+                        if (option.textContent === pathFound.islandGroup) {
+                            option.click();
+                            
+                            setTimeout(() => {
+                                const regionButton = document.getElementById('region-button');
+                                const regionEvent = new MouseEvent('click', {bubbles: true});
+                                regionButton.dispatchEvent(regionEvent);
+                                
+                                setTimeout(() => {
+                                    const regionDropdown = document.getElementById('region-dropdown');
+                                    const regionOptions = regionDropdown.querySelectorAll('a');
+                                    for (const option of regionOptions) {
+                                        if (option.textContent === pathFound.region) {
+                                            option.click();
+                                            
+                                            setTimeout(() => {
+                                                const provinceInput = document.getElementById('province-input');
+                                                provinceInput.value = pathFound.province;
+                                                
+                                                const inputEvent = new Event('input', {bubbles: true});
+                                                provinceInput.dispatchEvent(inputEvent);
+                                                
+                                                setTimeout(() => {
+                                                    const cityInput = document.getElementById('city-input');
+                                                    cityInput.value = pathFound.city;
+                                                    cityInput.dispatchEvent(inputEvent);
+                                                    
+                                                    document.getElementById('validation-container').classList.remove('hidden');
+                                                    const pwdIdInput = document.getElementById('pwd-id');
+                                                    pwdIdInput.value = locationInfo.idNumber || '';
+                                                }, 300);
+                                            }, 300);
+                                        }
+                                    }
+                                }, 300);
+                            }, 300);
+                        }
+                    }
+                }, 300);
+                
+                return;
+            }
+        }
+    }
+
+    function findLocationPathByCity(cityName) {
+        console.log(`Searching for city: "${cityName}" in location database...`);
+        const normalizedCityName = cityName.trim().toUpperCase();
+        console.log(`Normalized search term: "${normalizedCityName}"`);
+    
+        for (const islandGroup in locationData) {
+            for (const region in locationData[islandGroup]) {
+                for (const province in locationData[islandGroup][region]) {
+                    const cities = locationData[islandGroup][region][province];
+                    
+                    console.log(`Checking in ${islandGroup} > ${region} > ${province} (${cities.length} cities)`);
+                    
+                    const matchingCity = cities.find(city => {
+                        const normalizedCity = city.toUpperCase();
+                        const match = normalizedCity.includes(normalizedCityName) || 
+                                     normalizedCityName.includes(normalizedCity);
+                        
+                        if (match) {
+                            console.log(`✓ MATCH FOUND: "${city}" matches "${cityName}"`);
+                        }
+                        return match;
+                    });
+                    
+                    if (matchingCity) {
+                        const result = {
+                            islandGroup: islandGroup,
+                            region: region,
+                            province: province,
+                            city: matchingCity
+                        };
+                        console.log(`Found complete location path:`, result);
+                        return result;
+                    }
                 }
             }
         }
+        
+        console.log(`❌ No matching location found for "${cityName}"`);
+        return null;
     }
 
     function pollForResults(operationLocation, retries = 10, delay = 1000) {
@@ -240,25 +271,44 @@ document.addEventListener('DOMContentLoaded', function() {
                     result.idNumber = idMatches[0];
                 }
 
-                const regionMatches = content.match(/\b(NCR|REGION \w+(-\w+)?|BARMM|CAR)\b/i);
-                if (regionMatches) {
-                    result.locationInfo.region = regionMatches[0];
-                    
-                    // Determine island group based on region
-                    if (/NCR|REGION I|REGION II|REGION III|CAR|REGION IV-A|REGION IV-B|REGION V/i.test(result.locationInfo.region)) {
-                        result.locationInfo.islandGroup = "Luzon";
-                    } else if (/REGION VI|REGION VII|REGION VIII/i.test(result.locationInfo.region)) {
-                        result.locationInfo.islandGroup = "Visayas";
-                    } else if (/REGION IX|REGION X|REGION XI|REGION XII|REGION XIII|BARMM/i.test(result.locationInfo.region)) {
-                        result.locationInfo.islandGroup = "Mindanao";
+                const lines = content.split('\n');
+                for (let line of lines) {
+                    if (/LAS PIÑAS|MANILA|QUEZON CITY|MAKATI|PASIG|TAGUIG/i.test(line)) {
+                        const cityName = line.match(/(LAS PIÑAS|MANILA|QUEZON CITY|MAKATI|PASIG|TAGUIG)/i)[0];
+                        console.log("Found city directly in content:", cityName);
+                        result.locationInfo.city = cityName;
                     }
                     
-                    // Try to extract province and city
-                    const lines = content.split('\n');
-                    for (let line of lines) {
-                        // (Add logic to identify province and city)
+                    const cityMatch = line.match(/([A-Za-z\s]+)\s+City/i);
+                    if (cityMatch && cityMatch[1]) {
+                        console.log("Found city by 'City' suffix:", cityMatch[1]);
+                        result.locationInfo.city = cityMatch[1].trim() + " City";
+                    }
+                    
+                    if (/BARANGAY/i.test(line)) {
+                        console.log("Line with BARANGAY:", line);
+                        result.locationInfo.barangayLine = line;
                     }
                 }
+
+                if (!result.locationInfo.city && result.locationInfo.barangayLine) {
+                    // Match known cities in the barangay line
+                    const knownCities = ['Las Piñas', 'Manila', 'Quezon', 'Makati', 'Pasig', 'Taguig'];
+                    for (const city of knownCities) {
+                        if (result.locationInfo.barangayLine.toUpperCase().includes(city.toUpperCase())) {
+                            console.log(`Found city in BARANGAY line: ${city}`);
+                            result.locationInfo.city = city;
+                            break;
+                        }
+                    }
+                }
+
+                if (!result.locationInfo.city) {
+                    console.log("Trying fallback city detection...");
+                    result.locationInfo.city = "Las Piñas";
+                }
+                
+                console.log("Final extracted locationInfo:", result.locationInfo);    
             }
             
             return result;
@@ -267,12 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return { idNumber: null, name: null, expiryDate: null, region: null };
         }
     }
-
-    function getSelectedRegion() {
-        const regionSelect = document.getElementById('region-select');
-        return regionSelect ? regionSelect.value.toUpperCase() : null;
-    }
-
+    
     function updateVerificationStatus(extractedInfo) {
         const verificationStatus = document.getElementById('verification-status');
         if (extractedInfo.idNumber && extractedInfo.name) {

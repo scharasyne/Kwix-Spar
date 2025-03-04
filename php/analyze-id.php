@@ -19,9 +19,8 @@ $imageData = base64_decode($imageData);
 // Configuration for Azure Document Intelligence
 $endpoint = "https://pwdi.cognitiveservices.azure.com/";
 $key = "1ywJ9F2XtO5yFLJyUqhQGzZGQNQrnnrm7lAAUqqhOKH8UKBNHfcmJQQJ99BCACqBBLyXJ3w3AAALACOGakoI";
-$modelId = "prebuilt-idDocument"; // Use prebuilt ID document model
+$modelId = "prebuilt-idDocument";
 
-// Prepare the request
 $headers = [
     'Content-Type: application/octet-stream',
     'Ocp-Apim-Subscription-Key: ' . $key
@@ -46,7 +45,6 @@ $headers = substr($response, 0, $headerSize);
 $body = substr($response, $headerSize);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-// Extract operation-location header
 $operationLocation = null;
 foreach (explode("\n", $headers) as $headerLine) {
     if (stripos($headerLine, 'operation-location:') !== false) {
