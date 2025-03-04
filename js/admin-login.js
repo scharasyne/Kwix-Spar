@@ -35,12 +35,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const formData = new FormData(loginForm);
         try {
-            console.log('Attempting login with:', {
-                email: formData.get('email'),
-                region: formData.get('region')
-            });
-
-            const response = await fetch('/php/admin-login.php', {
+            const url = '/Kwix-Spar/php/admin-login.php';
+            console.log('Attempting fetch to:', url);
+            
+            const response = await fetch(url, {
                 method: 'POST',
                 body: formData
             });
@@ -58,8 +56,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert(data.message || 'Login failed. Please check your credentials.');
             }
         } catch (error) {
-            console.error('Error details:', error);
-            alert('Connection error: ' + error.message + '. Make sure XAMPP is running and the project is in the htdocs folder.');
+            console.error('Full error:', error);
+            console.error('Error name:', error.name);
+            console.error('Error message:', error.message);
+            console.error('Current page URL:', window.location.href);
+            alert('Connection error. Please check:\n' +
+                  '1. XAMPP is running (Apache)\n' +
+                  '2. Project is in htdocs folder\n' +
+                  '3. Accessing via localhost\n' +
+                  'Error: ' + error.message);
         }
     });
 }); 
