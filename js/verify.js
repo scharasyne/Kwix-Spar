@@ -6,6 +6,49 @@ document.addEventListener('DOMContentLoaded', function() {
     const processButton = document.getElementById('process-button');
     const resultsContainer = document.getElementById('results-container');
     const loadingIndicator = document.getElementById('loading');
+
+    const REGIONAL_ID_FORMATS = {
+        'NCR': {
+            patterns: [
+                /\b\d{9}-\d{3}\b/,           // Standard format with hyphen
+                /\b(\d{9})[\s-]*(\d{3})\b/   // NCR specific format
+            ],
+            validator: (id) => id.length === 13 && id.includes('-')
+        },
+        'LUZON': {
+            patterns: [
+                /\b\d{9}-\d{3}\b/,           // Standard format
+                /\bR\d{1}-\d{8}-\d{3}\b/,    // R1-XXXXXXXX-XXX format
+                /\bR\d{1}[\s-]*\d{8}[\s-]*\d{3}\b/
+            ],
+            validator: (id) => /^R\d{1}-\d{8}-\d{3}$/.test(id) || /^\d{9}-\d{3}$/.test(id)
+        },
+        'VISAYAS': {
+            patterns: [
+                /\b\d{4}-\d{4}-\d{4}\b/,     // XXXX-XXXX-XXXX format
+                /\bR\d{1}[-\s]*\d{12}\b/     // Region code followed by 12 digits
+            ],
+            validator: (id) => /^\d{4}-\d{4}-\d{4}$/.test(id) || /^R\d{1}-\d{12}$/.test(id)
+        },
+        'MINDANAO': {
+            patterns: [
+                /\b\d{9}-\d{3}\b/,
+                /\b\d{4}-\d{4}-\d{4}\b/,     // XXXX-XXXX-XXXX format
+                /\bPWD-\d{10}\b/             // PWD-XXXXXXXXXX format
+            ],
+            validator: (id) => id.startsWith('PWD-') || /^\d{9}-\d{3}$/.test(id)
+        },
+        // Default patterns for unknown regions
+        'DEFAULT': {
+            patterns: [
+                /\b\d{9}-\d{3}\b/,
+                /\b\d{12}\b/,
+                /\b(\d{9})[^\d\w]*(\d{3})\b/,
+                /\bPWD[\s-]*\d{10,12}\b/
+            ],
+            validator: (id) => id && id.length >= 12
+        }
+    };
     
     dropArea.addEventListener('click', () => {
         fileInput.click();
@@ -67,198 +110,179 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const imageUrl = previewImage.src;
         
-        // OCR configuration
-        const ocrConfig = {
-            lang: 'eng',
-            logger: m => console.log(m),
-            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-/.,: ',
-            tessedit_pageseg_mode: '1',
-            preserve_interword_spaces: '1',
-            tessjs_create_hocr: '0',
-            tessjs_create_tsv: '0',
-        };
-        
-        // Define regex patterns
-        const idNumberPattern = /(?:ID|PWD|ID\s*No\.?|ID\s*Number|PWD\s*ID)[:\.\s]*\s*(\d{9}-\d{3}|\d{9}\s+\d{3}|\d{12})/i;
-        const namePattern = /(?:Name|Full\s*Name)[:\.\s]*\s*([A-Za-z\s\.,]+)(?:\r|\n|$|\s{2,})/i;
-        const expiryPattern = /(?:Valid\s*Until|Expiry|Expiration|Exp\.?|Expiry\s*Date)[:\.\s]*\s*(\d{1,2}[\s\/\.\-]+\d{1,2}[\s\/\.\-]+\d{2,4})/i;
-        
-        Tesseract.recognize(imageUrl, 'eng', ocrConfig)
-            .then(({ data: { text } }) => {
-                console.log("Extracted text:", text);
-                
-                // Extract the data with primary method
-                let idNumber = extractDataImproved(text, idNumberPattern);
-                let name = extractDataImproved(text, namePattern);
-                let expiryDate = extractDataImproved(text, expiryPattern);
-                
-                // Display debug information in console
-                console.log("ID Number match:", text.match(idNumberPattern));
-                console.log("Name match:", text.match(namePattern));
-                console.log("Expiry match:", text.match(expiryPattern));
-                
-                // Try specialized ID extraction if standard method fails
-                if (!idNumber) {
-                    idNumber = findPwdIdFormat(text);
-                }
-
-                // Validate and format the ID
-                if (idNumber) {
-                    idNumber = validateIdNumber(idNumber);
-                }
-                
-                // Try fallback extraction for missing data
-                if (!idNumber || !name || !expiryDate) {
-                    console.log("Standard extraction failed, trying fallback approach");
-                    const fallbackData = extractWithFallback(text);
-                    
-                    // Use fallback data if primary extraction failed
-                    if (!idNumber && fallbackData.idNumber) {
-                        idNumber = validateIdNumber(fallbackData.idNumber);
-                    }
-                    if (!name && fallbackData.name) {
-                        name = fallbackData.name;
-                    }
-                    if (!expiryDate && fallbackData.expiryDate) {
-                        expiryDate = fallbackData.expiryDate;
-                    }
-                }
-                
-                // Update the UI
-                document.getElementById('id-number').textContent = idNumber || 'Not detected';
-                document.getElementById('name').textContent = name || 'Not detected';
-                document.getElementById('expiry-date').textContent = expiryDate || 'Not detected';
-
-                // Show verification status
-                const verificationStatus = document.getElementById('verification-status');
-                if (idNumber && name && expiryDate) {
-                    verificationStatus.textContent = 'Verification successful!';
-                    verificationStatus.classList.add('bg-green-100', 'text-green-800');
-                    verificationStatus.classList.remove('bg-red-100', 'text-red-800');
-                } else {
-                    verificationStatus.textContent = 'Verification incomplete. Some information could not be detected.';
-                    verificationStatus.classList.add('bg-red-100', 'text-red-800');
-                    verificationStatus.classList.remove('bg-green-100', 'text-green-800');
-                }
-                
-                // Hide loading indicator and show results
-                loadingIndicator.classList.add('hidden');
-                resultsContainer.classList.remove('hidden');
+        fetch('../php/analyze-id.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                imageData: imageUrl
             })
-            .catch(err => {
-                console.error('OCR Error:', err);
-                loadingIndicator.classList.add('hidden');
-                alert('Error processing the image. Please try again with a clearer image.');
-            });
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(!data.success){
+                throw new Error(data.message || 'Failed to process image');
+            }
+
+            return pollForResults(data.operationLocation);
+        })
+        .then(analysisResults => {
+            const extractedInfo = extractFromAzureResponse(analysisResults);
+
+            document.getElementById('id-number').textContent = extractedInfo.idNumber || 'Not detected';
+            document.getElementById('name').textContent = extractedInfo.name || 'Not detected';
+            // document.getElementById('expiry-date').textContent = extractedInfo.expiryDate || 'Not detected';
+
+            if (extractedInfo.locationInfo && extractedInfo.locationInfo.islandGroup) {
+                setLocationFromOCR(extractedInfo.locationInfo);
+            }
+
+            updateVerificationStatus(extractedInfo);
+
+            loadingIndicator.classList.add('hidden');
+            resultsContainer.classList.remove('hidden');
+        })
+        .catch(err => {
+            console.error('Document Analysis Error:', err);
+            loadingIndicator.classList.add('hidden');
+            alert('Error processing the image: ' + err.message);
+        });
     }
 
-    // Improved data extraction
-    function extractDataImproved(text, pattern) {
-        const match = text.match(pattern);
-        if (!match) return null;
-        return match[1] ? match[1].trim() : null;
-    }
-
-    // Extraction with line-by-line analysis
-    function extractWithFallback(text) {
-        const lines = text.split('\n');
-        let idNumber = null;
-        let name = null;
-        let expiryDate = null;
-        
-        // Try to find information by checking each line
-        for (const line of lines) {
-            const lowerLine = line.toLowerCase();
+    function setLocationFromOCR(locationInfo) {
+        if (locationInfo.islandGroup) {
+            // Set island group
+            const islandGroupButton = document.getElementById('island-group-button');
+            islandGroupButton.textContent = locationInfo.islandGroup;
+            document.getElementById('region-container').classList.remove('hidden');
             
-            // ID Number detection
-            if (lowerLine.includes('id') && !idNumber) {
-                const parts = line.split(/[:\s]+/);
-                for (let i = 0; i < parts.length; i++) {
-                    if (parts[i].toLowerCase().includes('id') && i + 1 < parts.length) {
-                        idNumber = parts[i + 1];
-                        break;
+            // Get regions for this island group
+            const regions = Object.keys(locationData[locationInfo.islandGroup]);
+            
+            if (locationInfo.region) {
+                // Find matching region in our data
+                const matchingRegion = regions.find(r => 
+                    r.toUpperCase().includes(locationInfo.region.toUpperCase()) || 
+                    locationInfo.region.toUpperCase().includes(r.toUpperCase())
+                );
+                
+                if (matchingRegion) {
+                    // Set region
+                    const regionButton = document.getElementById('region-button');
+                    regionButton.textContent = matchingRegion;
+                    document.getElementById('province-container').classList.remove('hidden');
+                }
+            }
+        }
+    }
+
+    function pollForResults(operationLocation, retries = 10, delay = 1000) {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            
+            const checkStatus = () => {
+                fetch(operationLocation, {
+                    headers: {
+                        'Ocp-Apim-Subscription-Key': '1ywJ9F2XtO5yFLJyUqhQGzZGQNQrnnrm7lAAUqqhOKH8UKBNHfcmJQQJ99BCACqBBLyXJ3w3AAALACOGakoI'
                     }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'succeeded') {
+                        resolve(data);
+                    } else if (data.status === 'failed') {
+                        reject(new Error(data.error.message));
+                    } else if (attempts < retries) {
+                        attempts++;
+                        setTimeout(checkStatus, delay);
+                    } else {
+                        reject(new Error('Operation timed out'));
+                    }
+                })
+                .catch(reject);
+            };
+            
+            checkStatus();
+        });
+    }
+
+    function extractFromAzureResponse(response) {
+        try {
+            console.log("Azure API response:", JSON.stringify(response, null, 2));
+
+            const result = {
+                idNumber: null,
+                name: null,
+                expiryDate: "N/A",
+                region: null,
+                locationInfo: {
+                    islandGroup: null,
+                    region: null,
+                    province: null,
+                    city: null
+                }
+            };
+            
+            if (response.analyzeResult && response.analyzeResult.documents) {
+                const document = response.analyzeResult.documents[0];
+                const fields = document.fields;
+                
+                // Extract name
+                if (fields.FirstName && fields.LastName) {
+                    result.name = `${fields.FirstName.valueString} ${fields.LastName.valueString}`;
                 }
                 
-                // Also look for any sequence of digits that could be an ID
-                if (!idNumber) {
-                    const digitSequence = line.match(/\d{9,12}/);
-                    if (digitSequence) idNumber = digitSequence[0];
+                // Extract ID from OCR content
+                const content = response.analyzeResult.content;
+                const idMatches = content.match(/(\d{7}-\d{3}-\d{4})/);
+                if (idMatches && idMatches.length > 0) {
+                    result.idNumber = idMatches[0];
+                }
+
+                const regionMatches = content.match(/\b(NCR|REGION \w+(-\w+)?|BARMM|CAR)\b/i);
+                if (regionMatches) {
+                    result.locationInfo.region = regionMatches[0];
+                    
+                    // Determine island group based on region
+                    if (/NCR|REGION I|REGION II|REGION III|CAR|REGION IV-A|REGION IV-B|REGION V/i.test(result.locationInfo.region)) {
+                        result.locationInfo.islandGroup = "Luzon";
+                    } else if (/REGION VI|REGION VII|REGION VIII/i.test(result.locationInfo.region)) {
+                        result.locationInfo.islandGroup = "Visayas";
+                    } else if (/REGION IX|REGION X|REGION XI|REGION XII|REGION XIII|BARMM/i.test(result.locationInfo.region)) {
+                        result.locationInfo.islandGroup = "Mindanao";
+                    }
+                    
+                    // Try to extract province and city
+                    const lines = content.split('\n');
+                    for (let line of lines) {
+                        // (Add logic to identify province and city)
+                    }
                 }
             }
             
-            // Name detection
-            if (lowerLine.includes('name') && !name) {
-                const namePart = line.split(/name[:\s]+/i)[1];
-                if (namePart) name = namePart.trim();
-            }
-            
-            // Expiry date detection
-            if ((lowerLine.includes('valid') || lowerLine.includes('expiry') || 
-                lowerLine.includes('expiration') || lowerLine.includes('until')) && !expiryDate) {
-                // Look for date pattern DD/MM/YYYY or similar
-                const dateMatch = line.match(/\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4}/);
-                if (dateMatch) expiryDate = dateMatch[0];
-            }
+            return result;
+        } catch (err) {
+            console.error('Error extracting data:', err);
+            return { idNumber: null, name: null, expiryDate: null, region: null };
         }
-        
-        return { idNumber, name, expiryDate };
     }
 
-    // Validate and format the ID number
-    function validateIdNumber(idStr) {
-        if (!idStr) return null;
-        
-        // Remove any non-digit characters except hyphens
-        let cleaned = idStr.replace(/[^\d\-]/g, '');
-        
-        // If we have 12 consecutive digits with no hyphen, insert it
-        if (/^\d{12}$/.test(cleaned)) {
-            cleaned = cleaned.substring(0, 9) + '-' + cleaned.substring(9);
-        }
-        
-        // Check if it matches our expected format
-        if (/^\d{9}-\d{3}$/.test(cleaned)) {
-            return cleaned;
-        }
-        
-        return null;
+    function getSelectedRegion() {
+        const regionSelect = document.getElementById('region-select');
+        return regionSelect ? regionSelect.value.toUpperCase() : null;
     }
 
-    // Special ID format finder
-    function findPwdIdFormat(text) {
-        // Look for the exact format with hyphen
-        const exactMatch = text.match(/\b\d{9}-\d{3}\b/);
-        if (exactMatch) return exactMatch[0];
-        
-        // Look for 12 digits that could be the ID without hyphen
-        const noHyphenMatch = text.match(/\b\d{12}\b/);
-        if (noHyphenMatch) {
-            const id = noHyphenMatch[0];
-            return id.substring(0, 9) + '-' + id.substring(9);
+    function updateVerificationStatus(extractedInfo) {
+        const verificationStatus = document.getElementById('verification-status');
+        if (extractedInfo.idNumber && extractedInfo.name) {
+            verificationStatus.textContent = 'Verification successful!';
+            verificationStatus.classList.add('bg-green-100', 'text-green-800');
+            verificationStatus.classList.remove('bg-red-100', 'text-red-800');
+        } else {
+            verificationStatus.textContent = 'Verification incomplete. Some information could not be detected.';
+            verificationStatus.classList.add('bg-red-100', 'text-red-800');
+            verificationStatus.classList.remove('bg-green-100', 'text-green-800');
         }
-        
-        // Look for 9 digits followed by 3 digits with spaces or other characters
-        const splitMatch = text.match(/\b(\d{9})[^\d\w]*(\d{3})\b/);
-        if (splitMatch) {
-            return splitMatch[1] + '-' + splitMatch[2];
-        }
-        
-        // Find any sequence of 9-12 digits that might be part of an ID
-        const anyDigits = text.match(/\b(\d{9,12})\b/);
-        if (anyDigits) {
-            const digits = anyDigits[1];
-            if (digits.length === 12) {
-                return digits.substring(0, 9) + '-' + digits.substring(9);
-            } else if (digits.length === 9) {
-                // Look for 3 more digits nearby
-                const threeMoreDigits = text.substring(text.indexOf(digits) + digits.length).match(/\b(\d{3})\b/);
-                if (threeMoreDigits) {
-                    return digits + '-' + threeMoreDigits[1];
-                }
-            }
-        }
-        
-        return null;
     }
 });
