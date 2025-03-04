@@ -92,7 +92,15 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('name').textContent = extractedInfo.name || 'Not detected';
             
             if (extractedInfo.locationInfo && extractedInfo.locationInfo.city) {
+                extractedInfo.locationInfo.idNumber = extractedInfo.idNumber;
                 setLocationFromOCR(extractedInfo.locationInfo);
+            }
+
+            const pwdIdInput = document.getElementById('pwd-id');
+            if (extractedInfo.idNumber) {
+                console.log('ID number detected:', extractedInfo.idNumber);
+                document.getElementById('validation-container').classList.remove('hidden');
+                pwdIdInput.value = extractedInfo.idNumber;
             }
             
             updateVerificationStatus(extractedInfo);
@@ -267,7 +275,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             setTimeout(() => {
                                 selectOption('region-dropdown', pathFound.region, () => {
                                     setTimeout(() => {
+                                        document.getElementById('province-container').classList.remove('hidden');
                                         setInputValue('province-input', pathFound.province, () => {
+                                            document.getElementById('city-container').classList.remove('hidden');
                                             setTimeout(() => {
                                                 setInputValue('city-input', pathFound.city, () => {
                                                     document.getElementById('validation-container').classList.remove('hidden');
