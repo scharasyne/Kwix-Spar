@@ -589,3 +589,375 @@ document.getElementById('validate-button').addEventListener('click', () => {
     // put the validate logic here, pwede rin yung para sa paglagay ng pic
     alert(`Validating ID: ${pwdId}`);
 });
+
+// Address speech recognition for location dropdowns
+function addAddressSpeechRecognition() {
+    // Create UI elements
+    const addressContainer = document.createElement('div');
+    addressContainer.className = 'mb-4 mt-4 flex items-center';
+    addressContainer.innerHTML = `
+        <div class="relative flex-1">
+            <input 
+                type="text" 
+                id="address-input" 
+                placeholder="Say or type your location and PWD ID (e.g. 'Argao, Cebu, PWD ID 12345678')" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+            <button 
+                id="speak-address" 
+                type="button" 
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold p-1 rounded-full"
+            >
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"/>
+                </svg>
+            </button>
+        </div>
+        <button 
+            id="search-address" 
+            type="button" 
+            class="ml-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+            Search
+        </button>
+        <button 
+            id="clear-fields" 
+            type="button" 
+            class="ml-2 px-3 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+        >
+            Clear
+        </button>
+    `;
+
+    // Add recording indicator
+    const recordingIndicator = document.createElement('div');
+    recordingIndicator.id = 'address-recording-indicator';
+    recordingIndicator.className = 'hidden mt-1 text-sm flex items-center';
+    recordingIndicator.innerHTML = '<span class="animate-pulse text-red-600 mr-1">●</span> Recording...';
+    
+    // Insert the UI elements before the first dropdown (island group)
+    const firstDropdown = document.getElementById('island-group-container');
+    firstDropdown.parentNode.insertBefore(addressContainer, firstDropdown);
+    firstDropdown.parentNode.insertBefore(recordingIndicator, firstDropdown);
+
+    // Set up speech recognition
+    if ('webkitSpeechRecognition' in window) {
+        const recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-PH'; // Philippine English
+        
+        let recognizing = false;
+        const addressInput = document.getElementById('address-input');
+        const speakButton = document.getElementById('speak-address');
+        const searchButton = document.getElementById('search-address');
+        const recordingIndicator = document.getElementById('address-recording-indicator');
+        
+        speakButton.addEventListener('click', () => {
+            if (recognizing) {
+                recognition.stop();
+            } else {
+                addressInput.value = '';
+                recognition.start();
+            }
+        });
+        
+        recognition.onstart = () => {
+            recognizing = true;
+            recordingIndicator.classList.remove('hidden');
+        };
+        
+        recognition.onend = () => {
+            recognizing = false;
+            recordingIndicator.classList.add('hidden');
+            
+            // Process the address after speech recognition ends
+            if (addressInput.value.trim()) {
+                processAddress(addressInput.value);
+            }
+        };
+        
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+            
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+            
+            if (finalTranscript) {
+                addressInput.value = finalTranscript;
+            } else {
+                addressInput.value = interimTranscript;
+            }
+        };
+        
+        searchButton.addEventListener('click', () => {
+            if (addressInput.value.trim()) {
+                processAddress(addressInput.value);
+            }
+        });
+        
+        // Process address on Enter key
+        addressInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && addressInput.value.trim()) {
+                processAddress(addressInput.value);
+            }
+        });
+
+        const clearButton = document.getElementById('clear-fields');
+        clearButton.addEventListener('click', () => {
+            // Reset address input
+            addressInput.value = '';
+            
+            // Reset island group dropdown
+            const islandGroupButton = document.getElementById('island-group-button');
+            islandGroupButton.textContent = 'Select Island Group';
+            
+            // Reset region dropdown
+            const regionButton = document.getElementById('region-button');
+            regionButton.textContent = 'Select Region';
+            
+            // Reset province and city inputs
+            const provinceInput = document.getElementById('province-input');
+            const cityInput = document.getElementById('city-input');
+            if (provinceInput) provinceInput.value = '';
+            if (cityInput) cityInput.value = '';
+            
+            // Reset PWD ID if it exists
+            const pwdIdInput = document.getElementById('pwd-id');
+            if (pwdIdInput) pwdIdInput.value = '';
+            
+            // Hide dependent containers
+            const regionContainer = document.getElementById('region-container');
+            const provinceContainer = document.getElementById('province-container');
+            const cityContainer = document.getElementById('city-container');
+            const validationContainer = document.getElementById('validation-container');
+            
+            if (regionContainer) regionContainer.classList.add('hidden');
+            if (provinceContainer) provinceContainer.classList.add('hidden');
+            if (cityContainer) cityContainer.classList.add('hidden');
+            if (validationContainer) validationContainer.classList.add('hidden');
+            
+            console.log('All form fields have been cleared');
+        });
+    }
+}
+
+// Process address and fill dropdowns, also detect PWD ID
+function processAddress(addressText) {
+    console.log('Processing address:', addressText);
+    
+    const result = {
+        islandGroup: null,
+        region: null,
+        province: null,
+        city: null,
+        pwdId: null
+    };
+    
+    // Clean and normalize the input
+    const cleanInput = addressText.toLowerCase().trim();
+    
+    // Extract PWD ID (same as before)
+    const pwdIdPatterns = [
+        /\b(?:pwd\s*id|pwd|id)\s*(?:number|#|no\.?)?\s*:?\s*(\d{5,12})\b/i,
+        /\b(\d{5,12})\s*(?:pwd\s*id|pwd|id)\b/i,
+        /\b(?:pwd|id)\s*(?:number|#|no\.?)?\s*(?:is|:)?\s*(\d{5,12})\b/i
+    ];
+    
+    for (const pattern of pwdIdPatterns) {
+        const match = cleanInput.match(pattern);
+        if (match && match[1]) {
+            result.pwdId = match[1];
+            break;
+        }
+    }
+    
+    // Remove PWD ID part from the text
+    let locationText = cleanInput;
+    if (result.pwdId) {
+        locationText = cleanInput.replace(/\b(?:pwd\s*id|pwd|id)\s*(?:number|#|no\.?)?\s*:?\s*\d{5,12}\b/ig, '')
+                               .replace(/\b\d{5,12}\s*(?:pwd\s*id|pwd|id)\b/ig, '')
+                               .replace(/\b(?:pwd|id)\s*(?:number|#|no\.?)?\s*(?:is|:)?\s*\d{5,12}\b/ig, '')
+                               .trim();
+    }
+    
+    // Improved location extraction
+    // First split by common delimiters
+    const parts = locationText.split(/,|\s+/).map(part => part.trim().toLowerCase()).filter(part => part);
+    
+    // Create a scoring system for matches
+    const matches = {
+        cities: [],
+        provinces: []
+    };
+    
+    // IMPROVED APPROACH: First pass - look for exact matches
+    for (const islandGroup in locationData) {
+        for (const region in locationData[islandGroup]) {
+            for (const province in locationData[islandGroup][region]) {
+                const cities = locationData[islandGroup][region][province];
+                
+                const provinceLower = province.toLowerCase();
+                // Check for exact province match
+                const provinceExactMatch = parts.some(part => part === provinceLower);
+                // Check for partial province match
+                const provincePartialMatch = parts.some(part => 
+                    provinceLower.includes(part) || part.includes(provinceLower)
+                );
+                
+                if (provinceExactMatch || provincePartialMatch) {
+                    matches.provinces.push({
+                        islandGroup,
+                        region,
+                        province,
+                        score: provinceExactMatch ? 100 : 50
+                    });
+                }
+                
+                // Check for city matches
+                for (const city of cities) {
+                    const cityLower = city.toLowerCase();
+                    // Handle "City" suffix specially to prevent false positives
+                    const cityWithoutSuffix = cityLower.replace(/\s+city$/, '');
+                    
+                    // Check for exact match
+                    const exactMatch = parts.some(part => part === cityLower || part === cityWithoutSuffix);
+                    
+                    // Check for partial match (with higher threshold)
+                    const partialMatch = parts.some(part => {
+                        // Only count partial match if it's substantial (>50% of the city name)
+                        if (part.length >= 3 && (cityLower.includes(part) || part.includes(cityLower))) {
+                            // Avoid matching city suffixes alone (like just "City")
+                            if (part === "city") return false;
+                            // For longer matches, score based on match length
+                            return true;
+                        }
+                        return false;
+                    });
+                    
+                    if (exactMatch || partialMatch) {
+                        matches.cities.push({
+                            islandGroup,
+                            region,
+                            province,
+                            city,
+                            // Score based on match quality and whether it's an exact match
+                            score: exactMatch ? 100 : 50
+                        });
+                    }
+                }
+            }
+        }
+    }
+    
+    // Sort matches by score (highest first)
+    matches.cities.sort((a, b) => b.score - a.score);
+    matches.provinces.sort((a, b) => b.score - a.score);
+    
+    console.log('Matched cities:', matches.cities);
+    console.log('Matched provinces:', matches.provinces);
+    
+    // Choose the best city match if available
+    if (matches.cities.length > 0) {
+        const bestMatch = matches.cities[0];
+        result.islandGroup = bestMatch.islandGroup;
+        result.region = bestMatch.region;
+        result.province = bestMatch.province;
+        result.city = bestMatch.city;
+    } 
+    // Otherwise use the province match
+    else if (matches.provinces.length > 0) {
+        const bestMatch = matches.provinces[0];
+        result.islandGroup = bestMatch.islandGroup;
+        result.region = bestMatch.region;
+        result.province = bestMatch.province;
+    }
+    
+    console.log('Final detection result:', result);
+    
+    // Fill in the PWD ID field if detected
+    if (result.pwdId) {
+        const pwdIdInput = document.getElementById('pwd-id');
+        if (pwdIdInput) {
+            pwdIdInput.value = result.pwdId;
+        }
+    }
+    
+    // Fill in the dropdowns based on the results (rest of the function stays the same)
+    // ...
+    
+    // Continue with existing code to fill dropdowns
+    if (result.islandGroup) {
+        const islandGroupButton = document.getElementById('island-group-button');
+        islandGroupButton.textContent = result.islandGroup;
+        
+        document.getElementById('region-container').classList.remove('hidden');
+        
+        if (result.region) {
+            const regionButton = document.getElementById('region-button');
+            regionButton.textContent = result.region;
+            
+            document.getElementById('province-container').classList.remove('hidden');
+            
+            const provinces = Object.keys(locationData[result.islandGroup][result.region]).sort();
+            setupSearchableDropdown(
+                'province-container',
+                'province-input',
+                'province-dropdown',
+                provinces,
+                (selectedProvince) => {
+                    document.getElementById('city-container').classList.remove('hidden');
+                    const cities = locationData[result.islandGroup][result.region][selectedProvince].sort();
+                    setupSearchableDropdown(
+                        'city-container',
+                        'city-input',
+                        'city-dropdown',
+                        cities,
+                        () => {
+                            document.getElementById('validation-container').classList.remove('hidden');
+                        }
+                    );
+                }
+            );
+            
+            if (result.province) {
+                const provinceInput = document.getElementById('province-input');
+                provinceInput.value = result.province;
+                
+                document.getElementById('city-container').classList.remove('hidden');
+                
+                const cities = locationData[result.islandGroup][result.region][result.province].sort();
+                setupSearchableDropdown(
+                    'city-container',
+                    'city-input',
+                    'city-dropdown',
+                    cities,
+                    () => {
+                        document.getElementById('validation-container').classList.remove('hidden');
+                    }
+                );
+                
+                if (result.city) {
+                    const cityInput = document.getElementById('city-input');
+                    cityInput.value = result.city;
+                    
+                    document.getElementById('validation-container').classList.remove('hidden');
+                }
+            }
+        }
+    }
+}
+
+// Initialize speech recognition on page load
+document.addEventListener('DOMContentLoaded', () => {
+    // Existing code...
+    
+    // Add speech recognition functionality
+    addAddressSpeechRecognition();
+});

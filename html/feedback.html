@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Homepage</title>
+    <title>Feedback</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
@@ -64,7 +64,7 @@
                         <div class="dropdown-content absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                             <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-md">Profile</a>
                             <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
-                            <a href="feedback.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-b-md">Feedback   </a>
+                            <a href="feedback.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-b-md">Feedback</a>
                             <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-b-md">Logout</a>
                         </div>
                     </div>
@@ -147,6 +147,16 @@
                         placeholder="Please share your thoughts..."
                         required
                     ></textarea>
+                    <div class="flex items-center mt-2">
+                        <button id="start-speech-to-text" type="button" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-2 rounded inline-flex items-center">
+                            <svg class="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M10 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0-8a6 6 0 1 1 0 12 6 6 0 0 1 0-12z"/></svg>
+                            <span>Speak</span>
+                        </button>
+                        <span id="recording-indicator" class="hidden ml-2 inline-flex items-center">
+                          <span class="animate-pulse text-red-600 mr-1">●</span> Recording...
+                        </span>
+                        <span id="language-detected" class="ml-2 text-sm text-gray-500 hidden"></span>
+                    </div>
                 </div>
 
                 <!-- Submit Button -->
@@ -186,6 +196,263 @@
       document.getElementById('feedback-message').addEventListener('input', e => {
         localStorage.setItem('feedback-message', e.target.value);
       });
+
+      
+      // Speech to text
+      const speechToTextButton = document.getElementById('start-speech-to-text');
+      const feedbackMessage = document.getElementById('feedback-message');
+      const recordingIndicator = document.getElementById('recording-indicator');
+       const languageDetected = document.getElementById('language-detected');
+      let recognizing = false;
+
+      if ('webkitSpeechRecognition' in window) {
+        const recognition = new webkitSpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 3; // Increased for better recognition
+        
+        // Start with empty string for auto-detection, but set Philippine language preferences
+        recognition.lang = '';
+        
+        // Philippine languages to try if auto-detection fails
+        const philippineLanguages = ['fil-PH', 'tl-PH', 'ceb-PH', 'en-PH'];
+        let currentLanguageIndex = 0;
+        let detectionAttempts = 0;
+        const MAX_DETECTION_ATTEMPTS = 3;
+
+        let finalTranscript = '';
+        let lastResultTimestamp = 0;
+        const SHORT_PAUSE_THRESHOLD = 750; // milliseconds for comma
+        const LONG_PAUSE_THRESHOLD = 1500; // milliseconds for period
+        
+        // Enhanced language map with more Philippine language variations
+        const languageNames = {
+          'en-US': 'English (US)',
+          'en-PH': 'English (Philippines)',
+          'fil': 'Filipino',
+          'fil-PH': 'Filipino',
+          'tl': 'Tagalog',
+          'tl-PH': 'Tagalog',
+          'ceb': 'Cebuano/Bisaya',
+          'ceb-PH': 'Cebuano/Bisaya',
+          'war': 'Waray',
+          'war-PH': 'Waray',
+          'ilo': 'Ilocano',
+          'ilo-PH': 'Ilocano',
+          'hil': 'Hiligaynon',
+          'hil-PH': 'Hiligaynon'
+        };
+        
+        // Add a manual language selector that shows up if auto-detection fails repeatedly
+        const createLanguageSelector = () => {
+          if (document.getElementById('manual-language-select')) return;
+          
+          const container = document.createElement('div');
+          container.className = 'mt-2 flex items-center';
+          container.id = 'language-selector-container';
+          
+          const label = document.createElement('label');
+          label.textContent = 'Select language: ';
+          label.className = 'text-sm text-gray-700 mr-2';
+          
+          const select = document.createElement('select');
+          select.id = 'manual-language-select';
+          select.className = 'border border-gray-300 rounded py-1 px-2 text-sm';
+          
+          // Add Philippine language options
+          for (const lang in languageNames) {
+            if (philippineLanguages.some(pl => lang.startsWith(pl.split('-')[0]))) {
+              const option = document.createElement('option');
+              option.value = lang;
+              option.textContent = languageNames[lang];
+              select.appendChild(option);
+            }
+          }
+          
+          select.addEventListener('change', () => {
+            recognition.lang = select.value;
+            languageDetected.textContent = `Selected: ${languageNames[select.value] || select.value}`;
+            languageDetected.classList.remove('hidden');
+          });
+          
+          container.appendChild(label);
+          container.appendChild(select);
+          
+          // Insert after the recording button
+          recordingIndicator.parentNode.parentNode.appendChild(container);
+        };
+
+        speechToTextButton.addEventListener('click', () => {
+          if (recognizing) {
+            recognition.stop();
+          } else {
+            // Keep previous transcript if already present
+            finalTranscript = feedbackMessage.value || "";
+            lastResultTimestamp = Date.now();
+            
+            // Reset detection attempts
+            detectionAttempts = 0;
+            currentLanguageIndex = 0;
+            
+            // Use selected language if manually set, otherwise auto-detect
+            const manualSelect = document.getElementById('manual-language-select');
+            if (manualSelect && manualSelect.value) {
+              recognition.lang = manualSelect.value;
+            } else {
+              recognition.lang = '';
+            }
+            
+            recognition.start();
+          }
+        });
+
+        recognition.onstart = () => {
+          recognizing = true;
+          speechToTextButton.textContent = 'Stop';
+          speechToTextButton.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+          speechToTextButton.classList.add('bg-red-500', 'hover:bg-red-600', 'text-white');
+          recordingIndicator.classList.remove('hidden');
+          languageDetected.classList.add('hidden'); // Hide language initially
+        };
+        
+        // Enhanced language detection
+        recognition.onlanguagechange = (event) => {
+          const detectedLang = recognition.lang;
+          if (detectedLang) {
+            const displayName = languageNames[detectedLang] || detectedLang;
+            languageDetected.textContent = `Detected: ${displayName}`;
+            languageDetected.classList.remove('hidden');
+          }
+        };
+
+        recognition.onresult = (event) => {
+          // Improved language detection
+          let detectedLang = '';
+          for (let i = 0; i < event.results.length; i++) {
+            if (event.results[i].lang) {
+              detectedLang = event.results[i].lang;
+              break;
+            }
+          }
+          
+          if (detectedLang) {
+            const displayName = languageNames[detectedLang] || detectedLang;
+            languageDetected.textContent = `Detected: ${displayName}`;
+            languageDetected.classList.remove('hidden');
+            detectionAttempts = 0; // Reset attempts counter if we detected something
+          } else {
+            detectionAttempts++;
+            
+            // If multiple attempts fail to detect language, try Philippine languages explicitly
+            if (detectionAttempts >= MAX_DETECTION_ATTEMPTS) {
+              // Show manual selector after multiple failed auto-detections
+              createLanguageSelector();
+              
+              // Try next Philippine language in the list
+              if (currentLanguageIndex < philippineLanguages.length) {
+                recognition.lang = philippineLanguages[currentLanguageIndex];
+                currentLanguageIndex++;
+                
+                languageDetected.textContent = `Trying: ${languageNames[recognition.lang] || recognition.lang}`;
+                languageDetected.classList.remove('hidden');
+              }
+            }
+          }
+          
+          // Rest of the existing code for handling the transcription
+          let interimTranscript = '';
+          const currentTime = Date.now();
+          const pauseDuration = currentTime - lastResultTimestamp;
+          
+          // Process results - existing code unchanged
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              // Add punctuation based on pause duration
+              let segment = event.results[i][0].transcript;
+              
+              // Only add punctuation if we already have some text
+              if (finalTranscript.trim().length > 0) {
+                if (pauseDuration > LONG_PAUSE_THRESHOLD) {
+                  // Long pause - add period and capitalize next word
+                  finalTranscript = finalTranscript.trim() + ". ";
+                  segment = segment.charAt(0).toUpperCase() + segment.slice(1);
+                } else if (pauseDuration > SHORT_PAUSE_THRESHOLD) {
+                  // Short pause - add comma
+                  finalTranscript = finalTranscript.trim() + ", ";
+                } else {
+                  // No significant pause - just add space
+                  finalTranscript = finalTranscript.trim() + " ";
+                }
+              }
+              
+              finalTranscript += segment + " ";
+              lastResultTimestamp = currentTime;
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
+          }
+          
+          // Display both final and interim results
+          feedbackMessage.value = finalTranscript;
+          
+          // Add the interim text with typing animation
+          if (interimTranscript) {
+            // Create typing animation by adding one character at a time with a small delay
+            let currentText = feedbackMessage.value;
+            let charIndex = 0;
+            
+            const typeInterim = () => {
+              if (charIndex < interimTranscript.length) {
+                feedbackMessage.value = currentText + interimTranscript.substring(0, charIndex + 1);
+                charIndex++;
+                setTimeout(typeInterim, 50); // Typing speed - adjust as needed
+              }
+            };
+            
+            typeInterim();
+          }
+          
+          localStorage.setItem('feedback-message', finalTranscript);
+        };
+
+        // Ensure first letter of transcript is capitalized
+        function capitalizeFirstLetter(text) {
+          if (text.length === 0) return text;
+          return text.charAt(0).toUpperCase() + text.slice(1);
+        }
+        
+        recognition.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+          recognizing = false;
+          speechToTextButton.textContent = 'Speak';
+          speechToTextButton.classList.add('bg-gray-200', 'hover:bg-gray-300');
+          speechToTextButton.classList.remove('bg-red-500', 'hover:bg-red-600', 'text-white');
+          recordingIndicator.classList.add('hidden');
+        };
+
+        recognition.onend = () => {
+          recognizing = false;
+          speechToTextButton.textContent = 'Speak';
+          speechToTextButton.classList.add('bg-gray-200', 'hover:bg-gray-300');
+          speechToTextButton.classList.remove('bg-red-500', 'hover:bg-red-600', 'text-white');
+          recordingIndicator.classList.add('hidden');
+          
+          // Ensure the final transcript is preserved in the textarea
+          if (finalTranscript.length > 0) {
+            // Capitalize first letter if needed
+            if (/^[a-z]/.test(finalTranscript)) {
+              finalTranscript = capitalizeFirstLetter(finalTranscript);
+            }
+            
+            // Make sure the text stays in the textarea
+            feedbackMessage.value = finalTranscript;
+            localStorage.setItem('feedback-message', finalTranscript);
+          }
+        };
+      } else {
+        speechToTextButton.disabled = true;
+        speechToTextButton.textContent = 'Speech to Text not supported';
+      }
     </script>
 </body>
 </html>
