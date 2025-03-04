@@ -2,6 +2,10 @@
 header('Content-Type: application/json');
 require_once 'db-connect.php';
 
+require_once __DIR__ . '/../vendor/autoload.php';
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->load();
+
 $json = file_get_contents('php://input');
 $data = json_decode($json, true);
 
@@ -16,7 +20,7 @@ $imageData = str_replace('data:image/png;base64,', '', $imageData);
 $imageData = str_replace(' ', '+', $imageData);
 
 // Google Cloud Vision API config
-$apiKey = "AIzaSyBo_ECi1EeIpc7WXyPKeLd0P3kRNwbuT1A";
+$apiKey = $_ENV['GOOGLE_VISION_API_KEY'];
 
 // Prepare request payload for Google Cloud Vision API
 $requestData = [
