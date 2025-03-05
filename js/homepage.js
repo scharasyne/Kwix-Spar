@@ -618,10 +618,88 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 });
 
-document.getElementById('validate-button').addEventListener('click', () => {
-    const pwdId = document.getElementById('pwd-id').value;
-    // put the validate logic here, pwede rin yung para sa paglagay ng pic
-    alert(`Validating ID: ${pwdId}`);
+document.getElementById('validate-button').addEventListener('click', async () => {
+    const pwdId = document.getElementById('pwd-id').value.trim();
+    console.log(`Sending validation request for ID: "${pwdId}"`);
+
+    if (!pwdId) {
+        alert('Please enter a PWD ID number');
+        return;
+    }
+
+    try {
+        const validateButton = document.getElementById('validate-button');
+        validateButton.textContent = 'Validating...';
+        validateButton.disabled = true;
+
+        const url = `../php/validate-pwd-id.php?id=${encodeURIComponent(pwdId)}`;
+        console.log('Fetch URL:', url);
+
+        const reponse = await fetch(url);
+        console.log('Response status:', reponse.status);
+
+        const text = await reponse.text();
+        console.log('Raw response:', text);
+
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch(e) {
+            throw new Error(`Invalid JSON response: ${text}`);
+        }
+        console.log('Parsed response:', data);
+
+        // const data = await response.json();
+
+        const validationStatus = document.getElementById('validation-status');
+        const nameElement = document.getElementById('name');
+
+        if (data.success) {
+            nameElement.textContent = data.record.name;
+
+            if(data.isExpired){
+                validationStatus.textContent = 'PWD ID is expired';
+                validationStatus.className = 'mt-4 p-3 rounded-lg bg-yellow-100 text-yellow-800';
+            }else{
+                validationStatus.textContent = 'PWD ID is valid';
+                validationStatus.className = 'mt-4 p-3 rounded-lg bg-green-100 text-green-800';
+            }
+
+            const details = document.createElement('div')
+            details.className = 'mt-2 text-sm';
+            details.innerHTML = `
+                <p><strong>Location:</strong> ${data.record.city}</p>
+                <p><strong>Disability Type:</strong> ${data.record.disability_type}</p>
+                <p><strong>Expiry Date:</strong> ${new Date(data.record.expiry_date).toLocaleDateString()}</p>
+            `;
+
+            const existingDetails = validationStatus.querySelector('div');
+            if (existingDetails) {
+                validationStatus.removeChild(existingDetails);
+            }
+            validationStatus.appendChild(details);
+        } else {
+            // Invalid ID
+            nameElement.textContent = 'Not found';
+            validationStatus.textContent = data.message || 'Invalid PWD ID';
+            validationStatus.className = 'mt-4 p-3 rounded-lg bg-red-100 text-red-800';
+            
+            // Remove any existing details
+            const existingDetails = validationStatus.querySelector('div');
+            if (existingDetails) {
+                validationStatus.removeChild(existingDetails);
+            }
+        }
+    } catch(error) {
+        console.error('Validation error:', error);
+        alert('Error validation PWD ID. Please try again.');
+    } finally {
+        const validateButton = document.getElementById('validate-button');
+        validateButton.textContent = "Validate ID";
+        validateButton.disabled = false;
+    }
+
+    // alert(`Validating ID: ${pwdId}`);
 });
 
 // Address speech recognition for location dropdowns
