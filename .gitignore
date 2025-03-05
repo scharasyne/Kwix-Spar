@@ -1,2 +1,4 @@
 .env
 /vendor/
+/uploads/
+php-errors.log
