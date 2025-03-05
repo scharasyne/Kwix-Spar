@@ -1,51 +1,61 @@
 <?php
 session_start();
 require_once 'db-connect.php';
-
 header('Content-Type: application/json');
 
 try {
-    // First, let's check if the table exists and has the right structure
-    $checkTable = $conn->query("SHOW COLUMNS FROM pwd_records");
-    $columns = $checkTable->fetchAll(PDO::FETCH_COLUMN);
-    error_log("Table columns: " . print_r($columns, true));
-
-    // Simple query to get all records
-    $query = "SELECT 
-        id,
-        pwd_id_number,
-        first_name,
-        last_name,
-        birth_date,
-        gender,
-        address,
-        city,
-        province,
-        disability_type,
-        id_expiry_date
-    FROM pwd_records";
-
-    $stmt = $conn->prepare($query);
+    // Get filters from request
+    $search = isset($_GET['search']) ? '%' . $_GET['search'] . '%' : '%';
+    $status = isset($_GET['status']) ? $_GET['status'] : 'all';
+    
+    // Get admin's city from session
+    $adminCity = $_SESSION['admin_city'] ?? '';
+    
+    // Build query with city filter
+    $sql = "SELECT * FROM pwd_records WHERE 
+            (pwd_id_number LIKE :search OR first_name LIKE :search OR last_name LIKE :search)";
+            
+    // Add city filter
+    if (!empty($adminCity)) {
+        $sql .= " AND city = :city";
+    }
+    
+    // Add status filter
+    if ($status !== 'all') {
+        $currentDate = date('Y-m-d');
+        if ($status === 'active') {
+            $sql .= " AND id_expiry_date >= :currentDate";
+        } else if ($status === 'expired') {
+            $sql .= " AND id_expiry_date < :currentDate";
+        }
+    }
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':search', $search);
+    
+    // Bind city parameter if present
+    if (!empty($adminCity)) {
+        $stmt->bindParam(':city', $adminCity);
+    }
+    
+    // Bind date parameter if needed
+    if ($status !== 'all') {
+        $stmt->bindParam(':currentDate', $currentDate);
+    }
+    
     $stmt->execute();
     $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Log the results
-    error_log("Found " . count($records) . " records");
-    if (count($records) > 0) {
-        error_log("First record: " . print_r($records[0], true));
-    }
-
-    // Return the records
+    
     echo json_encode([
         'success' => true,
         'records' => $records,
-        'count' => count($records)
+        'adminCity' => $adminCity
     ]);
-
+    
 } catch (Exception $e) {
-    error_log("Database error: " . $e->getMessage());
     echo json_encode([
         'success' => false,
         'message' => 'Database error: ' . $e->getMessage()
     ]);
-} 
+}
+?>
