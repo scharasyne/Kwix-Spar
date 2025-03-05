@@ -133,7 +133,41 @@ const locationData = {
                 'Botolan', 'Cabangan', 'Candelaria', 'Castillejos', 'Iba', 'Masinloc', 'Olongapo',
                 'Palauig', 'San Antonio', 'San Felipe', 'San Marcelino', 'San Narciso', 'Santa Cruz', 'Subic'
             ]
-        }
+        },
+        'Region 5': {  // Add Region 5 (Bicol Region)
+            'Albay': [
+                'Bacacay', 'Camalig', 'Daraga', 'Guinobatan', 'Jovellar', 'Legazpi City',
+                'Libon', 'Ligao City', 'Malilipot', 'Malinao', 'Manito', 'Oas',
+                'Pio Duran', 'Polangui', 'Rapu-Rapu', 'Santo Domingo', 'Tabaco City', 'Tiwi'
+            ],
+            'Camarines Norte': [
+                'Basud', 'Capalonga', 'Daet', 'Jose Panganiban', 'Labo', 'Mercedes',
+                'Paracale', 'San Lorenzo Ruiz', 'San Vicente', 'Santa Elena', 'Talisay', 'Vinzons'
+            ],
+            'Camarines Sur': [
+                'Baao', 'Balatan', 'Bato', 'Bombon', 'Buhi', 'Bula', 'Cabusao', 
+                'Calabanga', 'Camaligan', 'Canaman', 'Caramoan', 'Del Gallego', 'Gainza',
+                'Garchitorena', 'Goa', 'Iriga City', 'Lagonoy', 'Libmanan', 'Lupi',
+                'Magarao', 'Milaor', 'Minalabac', 'Nabua', 'Naga City', 'Ocampo',
+                'Pamplona', 'Pasacao', 'Pili', 'Presentacion', 'Ragay', 'Sagñay',
+                'San Fernando', 'San Jose', 'Sipocot', 'Siruma', 'Tigaon', 'Tinambac'
+            ],
+            'Catanduanes': [
+                'Bagamanoc', 'Baras', 'Bato', 'Caramoran', 'Gigmoto', 'Pandan',
+                'Panganiban', 'San Andres', 'San Miguel', 'Viga', 'Virac'
+            ],
+            'Masbate': [
+                'Aroroy', 'Baleno', 'Balud', 'Batuan', 'Cataingan', 'Cawayan',
+                'Claveria', 'Dimasalang', 'Esperanza', 'Mandaon', 'Masbate City',
+                'Milagros', 'Mobo', 'Monreal', 'Palanas', 'Pio V. Corpuz', 'Placer',
+                'San Fernando', 'San Jacinto', 'San Pascual', 'Uson'
+            ],
+            'Sorsogon': [  // Add Sorsogon province
+                'Barcelona', 'Bulan', 'Bulusan', 'Casiguran', 'Castilla', 'Donsol',
+                'Gubat', 'Irosin', 'Juban', 'Magallanes', 'Matnog', 'Pilar',
+                'Prieto Diaz', 'Santa Magdalena', 'Sorsogon City'
+            ]
+        },
     },
     Visayas: {
         'Region 6': {
@@ -588,4 +622,799 @@ document.getElementById('validate-button').addEventListener('click', () => {
     const pwdId = document.getElementById('pwd-id').value;
     // put the validate logic here, pwede rin yung para sa paglagay ng pic
     alert(`Validating ID: ${pwdId}`);
+});
+
+// Address speech recognition for location dropdowns
+function addAddressSpeechRecognition() {
+    // Create UI elements
+    const addressContainer = document.createElement('div');
+    addressContainer.className = 'mb-4 mt-4 flex items-center';
+    addressContainer.innerHTML = `
+        <div class="relative flex-1">
+            <input 
+                type="text" 
+                id="address-input" 
+                placeholder="Say or type your location (e.g. 'Makati City')" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+            <button 
+                id="speak-address" 
+                type="button" 
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold p-1 rounded-full"
+            >
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"/>
+                </svg>
+            </button>
+        </div>
+        <button 
+            id="search-address" 
+            type="button" 
+            class="ml-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+            Search
+        </button>
+        <button 
+            id="clear-fields" 
+            type="button" 
+            class="ml-2 px-3 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+        >
+            Clear
+        </button>
+    `;
+
+    // Add recording indicator
+    const recordingIndicator = document.createElement('div');
+    recordingIndicator.id = 'address-recording-indicator';
+    recordingIndicator.className = 'hidden mt-1 text-sm flex items-center';
+    recordingIndicator.innerHTML = '<span class="animate-pulse text-red-600 mr-1">●</span> Recording...';
+    
+    // Insert the UI elements before the first dropdown (island group)
+    const firstDropdown = document.getElementById('island-group-container');
+    firstDropdown.parentNode.insertBefore(addressContainer, firstDropdown);
+    firstDropdown.parentNode.insertBefore(recordingIndicator, firstDropdown);
+
+    // Set up speech recognition
+    if ('webkitSpeechRecognition' in window) {
+        const recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-PH'; // Philippine English
+        
+        let recognizing = false;
+        const addressInput = document.getElementById('address-input');
+        const speakButton = document.getElementById('speak-address');
+        const searchButton = document.getElementById('search-address');
+        const recordingIndicator = document.getElementById('address-recording-indicator');
+        
+        speakButton.addEventListener('click', () => {
+            if (recognizing) {
+                recognition.stop();
+            } else {
+                addressInput.value = '';
+                recognition.start();
+            }
+        });
+        
+        recognition.onstart = () => {
+            recognizing = true;
+            recordingIndicator.classList.remove('hidden');
+        };
+        
+        recognition.onend = () => {
+            recognizing = false;
+            recordingIndicator.classList.add('hidden');
+            
+            // Process the address after speech recognition ends
+            if (addressInput.value.trim()) {
+                processAddress(addressInput.value);
+            }
+        };
+        
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+            
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+            
+            if (finalTranscript) {
+                addressInput.value = finalTranscript;
+            } else {
+                addressInput.value = interimTranscript;
+            }
+        };
+        
+        searchButton.addEventListener('click', () => {
+            if (addressInput.value.trim()) {
+                processAddress(addressInput.value);
+            }
+        });
+        
+        // Process address on Enter key
+        addressInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && addressInput.value.trim()) {
+                processAddress(addressInput.value);
+            }
+        });
+
+        const clearButton = document.getElementById('clear-fields');
+        clearButton.addEventListener('click', () => {
+            // Reset address input
+            addressInput.value = '';
+            
+            // Reset island group dropdown
+            const islandGroupButton = document.getElementById('island-group-button');
+            islandGroupButton.textContent = 'Select Island Group';
+            
+            // Reset region dropdown
+            const regionButton = document.getElementById('region-button');
+            regionButton.textContent = 'Select Region';
+            
+            // Reset province and city inputs
+            const provinceInput = document.getElementById('province-input');
+            const cityInput = document.getElementById('city-input');
+            if (provinceInput) provinceInput.value = '';
+            if (cityInput) cityInput.value = '';
+            
+            // Reset PWD ID if it exists
+            const pwdIdInput = document.getElementById('pwd-id');
+            if (pwdIdInput) pwdIdInput.value = '';
+            
+            // Hide dependent containers
+            const regionContainer = document.getElementById('region-container');
+            const provinceContainer = document.getElementById('province-container');
+            const cityContainer = document.getElementById('city-container');
+            const validationContainer = document.getElementById('validation-container');
+            
+            if (regionContainer) regionContainer.classList.add('hidden');
+            if (provinceContainer) provinceContainer.classList.add('hidden');
+            if (cityContainer) cityContainer.classList.add('hidden');
+            if (validationContainer) validationContainer.classList.add('hidden');
+            
+            console.log('All form fields have been cleared');
+        });
+    }
+}
+
+// Process address and fill dropdowns, also detect PWD ID
+function processAddress(addressText) {
+    console.log('Processing address:', addressText);
+    
+    const result = {
+        islandGroup: null,
+        region: null,
+        province: null,
+        city: null
+    };
+    
+    // Clean and normalize the input
+    const cleanInput = addressText.toLowerCase().trim();
+    
+    // Remove common filler words
+    const locationText = cleanInput.replace(/\bphilippines\b|\bph\b|\bin\b/gi, '').trim();
+    
+    // First check if we have a comma-separated format (which is more reliable)
+    const segments = locationText.split(',').map(s => s.trim());
+    const hasCommaFormat = segments.length > 1;
+    
+    // Create a mapping of all city/municipality names to their locations
+    // This helps us handle name collisions
+    const cityMap = {};
+    const provinceMap = {};
+    
+    for (const islandGroup in locationData) {
+        for (const region in locationData[islandGroup]) {
+            for (const province in locationData[islandGroup][region]) {
+                // Track provinces
+                if (!provinceMap[province.toLowerCase()]) {
+                    provinceMap[province.toLowerCase()] = [];
+                }
+                provinceMap[province.toLowerCase()].push({
+                    islandGroup,
+                    region,
+                    province
+                });
+                
+                // Track cities
+                const cities = locationData[islandGroup][region][province];
+                for (const city of cities) {
+                    const cityLower = city.toLowerCase();
+                    if (!cityMap[cityLower]) {
+                        cityMap[cityLower] = [];
+                    }
+                    cityMap[cityLower].push({
+                        islandGroup,
+                        region,
+                        province,
+                        city
+                    });
+                    
+                    // Also add a version without "City" suffix
+                    const cityWithoutSuffix = cityLower.replace(/\s+city$/, '');
+                    if (cityWithoutSuffix !== cityLower) {
+                        if (!cityMap[cityWithoutSuffix]) {
+                            cityMap[cityWithoutSuffix] = [];
+                        }
+                        cityMap[cityWithoutSuffix].push({
+                            islandGroup,
+                            region,
+                            province,
+                            city
+                        });
+                    }
+                }
+            }
+        }
+    }
+    
+    // Array to hold potential matches with scores
+    const matches = [];
+    
+    // PHASE 1: If we have a comma-separated format, trust it more
+    if (hasCommaFormat) {
+        // Typically the format would be "City, Province" or "Municipality, Province"
+        const possibleCity = segments[0];
+        const possibleProvince = segments[1];
+        
+        // Look for exact city match first
+        const exactCityMatches = cityMap[possibleCity.toLowerCase()];
+        if (exactCityMatches) {
+            // We found cities with this exact name
+            for (const match of exactCityMatches) {
+                // If province is also specified, check if it matches
+                if (possibleProvince && match.province.toLowerCase().includes(possibleProvince.toLowerCase())) {
+                    // Best case: exact city and province match
+                    matches.push({...match, score: 200}); // Higher score for this perfect match
+                } else {
+                    // Just city match
+                    matches.push({...match, score: 150});
+                }
+            }
+        }
+        
+        // If we didn't find exact matches, try partial matching on the city
+        if (matches.length === 0) {
+            // Search through all city keys for partial matches
+            for (const cityKey in cityMap) {
+                if (cityKey.includes(possibleCity.toLowerCase()) || 
+                    possibleCity.toLowerCase().includes(cityKey)) {
+                    
+                    for (const match of cityMap[cityKey]) {
+                        // If province is specified, check if it matches
+                        if (possibleProvince && match.province.toLowerCase().includes(possibleProvince.toLowerCase())) {
+                            matches.push({...match, score: 120}); // Good score for partial match with province
+                        } else {
+                            matches.push({...match, score: 80}); // Lower score for just partial city match
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // PHASE 2: If we don't have good matches yet or no comma format, process word by word
+    if (matches.length === 0 || !hasCommaFormat) {
+        // Split into individual words
+        const words = locationText.split(/\s+/).map(word => word.toLowerCase().trim()).filter(w => w);
+        
+        // Try to find multi-word city names first (like "San Fernando")
+        for (let i = 0; i < words.length - 1; i++) {
+            for (let j = i + 1; j <= Math.min(i + 3, words.length); j++) {
+                const possibleCity = words.slice(i, j).join(' ');
+                
+                // Check for exact city match
+                if (cityMap[possibleCity]) {
+                    for (const match of cityMap[possibleCity]) {
+                        // Try to find province mention in remaining words
+                        const otherWords = [...words.slice(0, i), ...words.slice(j)];
+                        const hasProvinceMatch = otherWords.some(word => 
+                            match.province.toLowerCase().includes(word) || word.includes(match.province.toLowerCase())
+                        );
+                        
+                        if (hasProvinceMatch) {
+                            matches.push({...match, score: 180});
+                        } else {
+                            matches.push({...match, score: 120});
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Then check for single-word cities (if we haven't found good matches yet)
+        if (matches.filter(m => m.score > 100).length === 0) {
+            for (const word of words) {
+                if (word.length < 3 || word === 'city') continue; // Skip very short words or generic terms
+                
+                // Check for exact city match
+                if (cityMap[word]) {
+                    for (const match of cityMap[word]) {
+                        // Try to find province match in other words
+                        const hasProvinceMatch = words.some(w => 
+                            w !== word && (
+                                match.province.toLowerCase().includes(w) || 
+                                w.includes(match.province.toLowerCase())
+                            )
+                        );
+                        
+                        if (hasProvinceMatch) {
+                            matches.push({...match, score: 150});
+                        } else {
+                            matches.push({...match, score: 100});
+                        }
+                    }
+                }
+                
+                // Check for partial city matches
+                for (const cityKey in cityMap) {
+                    // Skip if the key is too short or just "city"
+                    if (cityKey.length < 3 || cityKey === 'city') continue; 
+                    
+                    // Only match if there's substantial overlap
+                    const keyParts = cityKey.split(/\s+/);
+                    if (keyParts.some(part => part === word) || 
+                        (word.length >= 5 && cityKey.includes(word)) ||
+                        (word.length >= 6 && word.includes(cityKey))) {
+                        
+                        for (const match of cityMap[cityKey]) {
+                            // Check for province match in other words
+                            const hasProvinceMatch = words.some(w => 
+                                w !== word && (
+                                    match.province.toLowerCase().includes(w) || 
+                                    w.includes(match.province.toLowerCase())
+                                )
+                            );
+                            
+                            // Score based on match quality and province context
+                            if (hasProvinceMatch) {
+                                matches.push({...match, score: 90});
+                            } else {
+                                matches.push({...match, score: 50});
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // PHASE 3: If we still don't have matches, try province matching
+    if (matches.length === 0) {
+        const words = locationText.split(/\s+/).map(word => word.toLowerCase().trim()).filter(w => w);
+        
+        for (const provinceName in provinceMap) {
+            // Check for province mentions
+            const hasProvinceMatch = words.some(word => 
+                provinceName.includes(word) || word.includes(provinceName)
+            );
+            
+            if (hasProvinceMatch) {
+                const provinceMatches = provinceMap[provinceName];
+                for (const provinceMatch of provinceMatches) {
+                    // We'll use these province matches if we can't find city matches
+                    matches.push({
+                        islandGroup: provinceMatch.islandGroup,
+                        region: provinceMatch.region,
+                        province: provinceMatch.province,
+                        score: 40
+                    });
+                }
+            }
+        }
+    }
+    
+    // Sort matches by score descending
+    matches.sort((a, b) => b.score - a.score);
+    console.log('Potential matches:', matches);
+    
+    // Use the best match
+    if (matches.length > 0) {
+        const bestMatch = matches[0];
+        result.islandGroup = bestMatch.islandGroup;
+        result.region = bestMatch.region;
+        result.province = bestMatch.province;
+        if (bestMatch.city) result.city = bestMatch.city;
+    }
+    
+    console.log('Final detection result:', result);
+    
+    // Continue with filling the form fields (unchanged)
+    if (result.islandGroup) {
+        const islandGroupButton = document.getElementById('island-group-button');
+        islandGroupButton.textContent = result.islandGroup;
+        
+        document.getElementById('region-container').classList.remove('hidden');
+        
+        if (result.region) {
+            const regionButton = document.getElementById('region-button');
+            regionButton.textContent = result.region;
+            
+            document.getElementById('province-container').classList.remove('hidden');
+            
+            const provinces = Object.keys(locationData[result.islandGroup][result.region]).sort();
+            setupSearchableDropdown(
+                'province-container',
+                'province-input',
+                'province-dropdown',
+                provinces,
+                (selectedProvince) => {
+                    document.getElementById('city-container').classList.remove('hidden');
+                    const cities = locationData[result.islandGroup][result.region][selectedProvince].sort();
+                    setupSearchableDropdown(
+                        'city-container',
+                        'city-input',
+                        'city-dropdown',
+                        cities,
+                        () => {
+                            document.getElementById('validation-container').classList.remove('hidden');
+                        }
+                    );
+                }
+            );
+            
+            if (result.province) {
+                const provinceInput = document.getElementById('province-input');
+                provinceInput.value = result.province;
+                
+                document.getElementById('city-container').classList.remove('hidden');
+                
+                const cities = locationData[result.islandGroup][result.region][result.province].sort();
+                setupSearchableDropdown(
+                    'city-container',
+                    'city-input',
+                    'city-dropdown',
+                    cities,
+                    () => {
+                        document.getElementById('validation-container').classList.remove('hidden');
+                    }
+                );
+                
+                if (result.city) {
+                    const cityInput = document.getElementById('city-input');
+                    cityInput.value = result.city;
+                    
+                    document.getElementById('validation-container').classList.remove('hidden');
+                }
+            }
+        }
+    }
+}
+
+// Initialize speech recognition on page load
+document.addEventListener('DOMContentLoaded', () => {
+    // Existing code...
+    
+    // Add speech recognition functionality
+    addAddressSpeechRecognition();
+    
+    // Add speech recognition for PWD ID
+    addPwdIdSpeechRecognition();
+    
+    // Since the validation container is initially hidden, we also need to set up an observer
+    // to add the speech recognition when it becomes visible
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.target.id === 'validation-container' && 
+                !mutation.target.classList.contains('hidden') &&
+                !document.getElementById('speak-pwdid')) {
+                // Only call if the microphone button doesn't already exist
+                addPwdIdSpeechRecognition();
+            }
+        });
+    });
+    
+    const validationContainer = document.getElementById('validation-container');
+    if (validationContainer) {
+        observer.observe(validationContainer, { 
+            attributes: true,   
+            attributeFilter: ['class'] 
+        });
+    }
+});
+
+// Add this function to add speech recognition for PWD ID input
+
+function addPwdIdSpeechRecognition() {
+    // Check if the validation container exists
+    const validationContainer = document.getElementById('validation-container');
+    if (!validationContainer) return;
+    
+    // Check if we've already set up speech recognition for this field
+    if (document.getElementById('speak-pwdid')) return;
+    
+    // Find the PWD ID input field
+    const pwdIdInput = document.getElementById('pwd-id');
+    if (!pwdIdInput) return;
+    
+    // Create a wrapper for the input field to position the microphone button
+    const wrapper = document.createElement('div');
+    wrapper.className = 'relative flex-1';
+    
+    // Clone the original input with all its attributes and event listeners
+    const newInput = pwdIdInput.cloneNode(true);
+    
+    // Replace the input with our wrapper containing the cloned input
+    pwdIdInput.parentNode.replaceChild(wrapper, pwdIdInput);
+    wrapper.appendChild(newInput);
+    
+    // Create the microphone button
+    const micButton = document.createElement('button');
+    micButton.id = 'speak-pwdid';
+    micButton.type = 'button';
+    micButton.className = 'absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold p-1 rounded-full';
+    micButton.innerHTML = `
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"/>
+        </svg>
+    `;
+    
+    // Add the button to the wrapper
+    wrapper.appendChild(micButton);
+    
+    // Create recording indicator
+    const recordingIndicator = document.createElement('div');
+    recordingIndicator.id = 'pwdid-recording-indicator';
+    recordingIndicator.className = 'hidden mt-1 text-sm flex items-center';
+    recordingIndicator.innerHTML = '<span class="animate-pulse text-red-600 mr-1">●</span> Recording...';
+    
+    // Add the indicator after the wrapper
+    wrapper.parentNode.insertBefore(recordingIndicator, wrapper.nextSibling);
+    
+    // Set up speech recognition
+    if ('webkitSpeechRecognition' in window) {
+        const recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-PH';
+        
+        let recognizing = false;
+        
+        micButton.addEventListener('click', () => {
+            if (recognizing) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        });
+        
+        recognition.onstart = () => {
+            recognizing = true;
+            recordingIndicator.classList.remove('hidden');
+        };
+        
+        recognition.onend = () => {
+            recognizing = false;
+            recordingIndicator.classList.add('hidden');
+        };
+        
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript.trim();
+            console.log('PWD ID Recognition result:', transcript);
+            
+            // Extract just the numbers from the transcript
+            const numbersOnly = transcript.replace(/[^0-9]/g, '');
+            
+            // If we have digits, use them as ID
+            if (numbersOnly.length > 0) {
+                newInput.value = numbersOnly;
+                console.log('Setting PWD ID to numbers:', numbersOnly);
+            } else {
+                // Otherwise use the raw transcript
+                newInput.value = transcript;
+                console.log('Setting PWD ID to transcript:', transcript);
+            }
+            
+            // Ensure the change is recognized by triggering an input event
+            const inputEvent = new Event('input', { bubbles: true });
+            newInput.dispatchEvent(inputEvent);
+        };
+        
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error', event.error);
+            recognizing = false;
+            recordingIndicator.classList.add('hidden');
+        };
+    }
+}
+
+// Also modify the observer to ensure it doesn't keep adding microphones
+document.addEventListener('DOMContentLoaded', () => {
+    // Keep existing code...
+    
+    // Modified observer to avoid duplicate initialization
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.target.id === 'validation-container' && 
+                !mutation.target.classList.contains('hidden') &&
+                !document.getElementById('speak-pwdid')) {
+                // Only call if the microphone button doesn't already exist
+                addPwdIdSpeechRecognition();
+            }
+        });
+    });
+});
+
+// Add local storage functionality to save and restore form values
+
+// Save form values to localStorage
+function saveToLocalStorage() {
+    const formData = {
+        islandGroup: document.getElementById('island-group-button').textContent,
+        region: document.getElementById('region-button').textContent,
+        province: document.getElementById('province-input')?.value || '',
+        city: document.getElementById('city-input')?.value || '',
+        pwdId: document.getElementById('pwd-id')?.value || ''
+    };
+    
+    // Only save if at least the island group has been selected
+    if (formData.islandGroup !== 'Select Island Group') {
+        localStorage.setItem('kwixSparLocationData', JSON.stringify(formData));
+        console.log('Form data saved to localStorage:', formData);
+    }
+}
+
+// Load form values from localStorage
+function loadFromLocalStorage() {
+    const savedData = localStorage.getItem('kwixSparLocationData');
+    if (!savedData) return;
+    
+    try {
+        const formData = JSON.parse(savedData);
+        console.log('Loading saved data from localStorage:', formData);
+        
+        // Only proceed if we have valid data
+        if (!formData.islandGroup || formData.islandGroup === 'Select Island Group') return;
+        
+        // Set island group
+        const islandGroupButton = document.getElementById('island-group-button');
+        islandGroupButton.textContent = formData.islandGroup;
+        
+        // Show and populate region
+        document.getElementById('region-container').classList.remove('hidden');
+        if (formData.region && formData.region !== 'Select Region') {
+            const regionButton = document.getElementById('region-button');
+            regionButton.textContent = formData.region;
+            
+            // Show province container
+            document.getElementById('province-container').classList.remove('hidden');
+            
+            // Set up province dropdown
+            const provinces = Object.keys(locationData[formData.islandGroup][formData.region]).sort();
+            setupSearchableDropdown(
+                'province-container',
+                'province-input',
+                'province-dropdown',
+                provinces,
+                (selectedProvince) => {
+                    document.getElementById('city-container').classList.remove('hidden');
+                    const cities = locationData[formData.islandGroup][formData.region][selectedProvince].sort();
+                    setupSearchableDropdown(
+                        'city-container',
+                        'city-input',
+                        'city-dropdown',
+                        cities,
+                        () => {
+                            document.getElementById('validation-container').classList.remove('hidden');
+                        }
+                    );
+                }
+            );
+            
+            // Set province value
+            if (formData.province) {
+                setTimeout(() => {
+                    const provinceInput = document.getElementById('province-input');
+                    provinceInput.value = formData.province;
+                    
+                    // Show city container
+                    document.getElementById('city-container').classList.remove('hidden');
+                    
+                    // Set up city dropdown
+                    const cities = locationData[formData.islandGroup][formData.region][formData.province].sort();
+                    setupSearchableDropdown(
+                        'city-container',
+                        'city-input',
+                        'city-dropdown',
+                        cities,
+                        () => {
+                            document.getElementById('validation-container').classList.remove('hidden');
+                        }
+                    );
+                    
+                    // Set city value
+                    if (formData.city) {
+                        setTimeout(() => {
+                            const cityInput = document.getElementById('city-input');
+                            cityInput.value = formData.city;
+                            
+                            // Show validation container
+                            document.getElementById('validation-container').classList.remove('hidden');
+                            
+                            // Set PWD ID if available
+                            if (formData.pwdId) {
+                                setTimeout(() => {
+                                    const pwdIdInput = document.getElementById('pwd-id');
+                                    if (pwdIdInput) pwdIdInput.value = formData.pwdId;
+                                }, 100);
+                            }
+                        }, 100);
+                    }
+                }, 100);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading data from localStorage:', error);
+    }
+}
+
+// Set up event listeners to save data on change
+function setupLocalStorageEvents() {
+    // Save when island group changes
+    document.getElementById('island-group-dropdown').addEventListener('click', (e) => {
+        if (e.target.tagName === 'A') {
+            setTimeout(saveToLocalStorage, 100);
+        }
+    });
+    
+    // Save when region changes
+    document.getElementById('region-dropdown').addEventListener('click', (e) => {
+        if (e.target.tagName === 'A') {
+            setTimeout(saveToLocalStorage, 100);
+        }
+    });
+    
+    // Save when province changes (input and selection)
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#province-dropdown')) {
+            setTimeout(saveToLocalStorage, 100);
+        }
+    });
+    
+    document.getElementById('province-input')?.addEventListener('change', () => {
+        saveToLocalStorage();
+    });
+    
+    // Save when city changes
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#city-dropdown')) {
+            setTimeout(saveToLocalStorage, 100);
+        }
+    });
+    
+    document.getElementById('city-input')?.addEventListener('change', () => {
+        saveToLocalStorage();
+    });
+    
+    // Save when PWD ID changes
+    document.getElementById('pwd-id')?.addEventListener('input', () => {
+        saveToLocalStorage();
+    });
+    
+    // Save when address is processed
+    document.getElementById('search-address')?.addEventListener('click', () => {
+        setTimeout(saveToLocalStorage, 500); // Wait for processing to complete
+    });
+    
+    // Clear storage when fields are cleared
+    document.getElementById('clear-fields')?.addEventListener('click', () => {
+        localStorage.removeItem('kwixSparLocationData');
+        console.log('Form data removed from localStorage');
+    });
+}
+
+// Add this to the DOMContentLoaded event
+document.addEventListener('DOMContentLoaded', () => {
+    // Existing initialization code...
+    
+    // Set up local storage
+    setupLocalStorageEvents();
+    
+    // Load saved data (after a slight delay to ensure all elements are ready)
+    setTimeout(loadFromLocalStorage, 200);
 });
