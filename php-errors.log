@@ -914,3 +914,85 @@
 
 )
 
+[05-Mar-2025 05:27:09 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\Kwix-Spar\php\check-auth.php on line 2
+[05-Mar-2025 05:27:09 Europe/Berlin] POST data: Array
+(
+    [pwd_id] => 555555
+    [first_name] => Solis
+    [last_name] => JM
+    [city] => Quezon City
+    [disability_type] => Hearing
+    [expiry_date] => 2025-04-03
+    [birth_date] => 2025-03-13
+    [gender] => Male
+    [address] => fbsdfs
+)
+
+[05-Mar-2025 05:27:09 Europe/Berlin] FILES data: Array
+(
+    [medical_certificate] => Array
+        (
+            [name] => medcert.png
+            [full_path] => medcert.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php6B79.tmp
+            [error] => 0
+            [size] => 97536
+        )
+
+    [barangay_certification] => Array
+        (
+            [name] => medcert.png
+            [full_path] => medcert.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php6B7A.tmp
+            [error] => 0
+            [size] => 97536
+        )
+
+    [id_picture] => Array
+        (
+            [name] => medcert.png
+            [full_path] => medcert.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php6B7B.tmp
+            [error] => 0
+            [size] => 97536
+        )
+
+    [additional_documents] => Array
+        (
+            [name] => Array
+                (
+                    [0] => medcert.png
+                )
+
+            [full_path] => Array
+                (
+                    [0] => medcert.png
+                )
+
+            [type] => Array
+                (
+                    [0] => image/png
+                )
+
+            [tmp_name] => Array
+                (
+                    [0] => C:\xampp\tmp\php6B7C.tmp
+                )
+
+            [error] => Array
+                (
+                    [0] => 0
+                )
+
+            [size] => Array
+                (
+                    [0] => 97536
+                )
+
+        )
+
+)
+

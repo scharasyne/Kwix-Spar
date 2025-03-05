@@ -4,14 +4,28 @@ require_once 'db-connect.php';
 header('Content-Type: application/json');
 
 try {
-    // Simple query to get all stats at once
+    // Get admin's city
+    $adminCity = $_SESSION['admin_city'] ?? '';
+    
+    // Build query with city filter
     $query = "SELECT 
         COUNT(*) as total,
         SUM(CASE WHEN id_expiry_date >= CURDATE() THEN 1 ELSE 0 END) as active,
         SUM(CASE WHEN id_expiry_date < CURDATE() THEN 1 ELSE 0 END) as expired
         FROM pwd_records";
+    
+    // Add city filter
+    if (!empty($adminCity)) {
+        $query .= " WHERE city = :city";
+    }
 
     $stmt = $conn->prepare($query);
+    
+    // Bind city parameter if present
+    if (!empty($adminCity)) {
+        $stmt->bindParam(':city', $adminCity);
+    }
+    
     $stmt->execute();
     $stats = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -25,13 +39,15 @@ try {
 
     echo json_encode([
         'success' => true,
-        'data' => $stats
+        'data' => $stats,
+        'adminCity' => $adminCity
     ]);
-
+    
 } catch (Exception $e) {
     error_log("Error getting stats: " . $e->getMessage());
     echo json_encode([
         'success' => false,
-        'message' => 'Error getting stats: ' . $e->getMessage()
+        'message' => 'Database error: ' . $e->getMessage()
     ]);
-} 
+}
+?>
