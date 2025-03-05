@@ -55,3 +55,55 @@ The PWD ID Validator System is a web-based application designed to validate Phil
    ```
 
 ## Project Structure
+project-root/
+├── images/
+│ ├── nav_logo.png
+│ └── navb_logo.png
+├── js/
+│ ├── homepage.js # Main JavaScript for homepage functionality
+│ └── image-scanning.js # OCR and image processing logic
+├── html/
+│ ├── homepage.html # Main validation page
+│ ├── feedback.html # Contact/feedback form
+│ └── admin-login.html # Admin authentication page
+└── README.md
+
+## Usage
+1. **Manual Validation**
+   - Select your location using the dropdown menus
+   - Enter the PWD ID number
+   - Click "Validate ID"
+
+2. **Image Scanning**
+   - Upload a PWD ID image using drag-and-drop or file browser
+   - Wait for the OCR processing
+   - View extracted information and validation results
+
+## Security Features
+- Input validation and sanitization
+- Secure image processing
+- Protected admin access
+
+## Browser Compatibility
+- Chrome (recommended)
+- Firefox
+- Safari
+- Edge
+
+## Contributing
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature/improvement`)
+3. Commit your changes (`git commit -am 'Add new feature'`)
+4. Push to the branch (`git push origin feature/improvement`)
+5. Create a Pull Request
+
+## License
+[Your chosen license]
+
+## Contact
+For support or queries, please contact [your contact information]
+
+## Acknowledgments
+- Tesseract.js team for OCR capabilities
+- TailwindCSS team for the styling framework
+- [Any other acknowledgments]
