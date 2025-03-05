@@ -996,3 +996,85 @@
 
 )
 
+[05-Mar-2025 05:48:57 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\Kwix-Spar\php\check-auth.php on line 2
+[05-Mar-2025 05:48:57 Europe/Berlin] POST data: Array
+(
+    [pwd_id] => 77777777
+    [first_name] => Hello
+    [last_name] => Po
+    [city] => Taguig
+    [disability_type] => Multiple
+    [expiry_date] => 2025-03-14
+    [birth_date] => 2025-03-08
+    [gender] => Male
+    [address] => hahah ok rako 
+)
+
+[05-Mar-2025 05:48:57 Europe/Berlin] FILES data: Array
+(
+    [medical_certificate] => Array
+        (
+            [name] => medcert.png
+            [full_path] => medcert.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php610C.tmp
+            [error] => 0
+            [size] => 97536
+        )
+
+    [barangay_certification] => Array
+        (
+            [name] => medcert.png
+            [full_path] => medcert.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php610D.tmp
+            [error] => 0
+            [size] => 97536
+        )
+
+    [id_picture] => Array
+        (
+            [name] => medcert.png
+            [full_path] => medcert.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\php610E.tmp
+            [error] => 0
+            [size] => 97536
+        )
+
+    [additional_documents] => Array
+        (
+            [name] => Array
+                (
+                    [0] => 
+                )
+
+            [full_path] => Array
+                (
+                    [0] => 
+                )
+
+            [type] => Array
+                (
+                    [0] => 
+                )
+
+            [tmp_name] => Array
+                (
+                    [0] => 
+                )
+
+            [error] => Array
+                (
+                    [0] => 4
+                )
+
+            [size] => Array
+                (
+                    [0] => 0
+                )
+
+        )
+
+)
+

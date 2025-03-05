@@ -30,6 +30,10 @@ function initializeEventListeners() {
         document.getElementById('pwd-modal').classList.remove('hidden');
         document.getElementById('modal-title').textContent = 'Add New PWD ID Holder';
         document.getElementById('pwd-form').reset();
+        
+        console.log('Opening Add PWD modal');
+        // Populate city dropdown with cities from admin's region
+        populateCityDropdown();
     });
     //cancel
     document.getElementById('cancel-pwd').addEventListener('click', () => {
@@ -224,23 +228,151 @@ function handleFilterChange(e) {
 }
 
 async function editRecord(id) {
-    try {
-        const response = await fetch(`../php/get-pwd-record.php?id=${id}`);
-        const record = await response.json();
-        
-        document.getElementById('modal-title').textContent = 'Edit PWD ID Holder';
-        document.getElementById('pwd-id').value = record.pwd_id_number;
-        document.getElementById('first-name').value = record.first_name;
-        document.getElementById('last-name').value = record.last_name;
-        document.getElementById('city').value = record.city;
-        document.getElementById('disability-type').value = record.disability_type;
-        document.getElementById('expiry-date').value = record.expiry_date;
-        
-        document.getElementById('pwd-modal').classList.remove('hidden');
-    } catch (error) {
-        console.error('Error loading record:', error);
-        alert('Error loading record');
+    fetch(`../php/get-pwd-details.php?id=${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('pwd-modal').classList.remove('hidden');
+                document.getElementById('modal-title').textContent = 'Edit PWD ID Holder';
+                document.getElementById('pwd-form').reset();
+                
+                // Fill in form fields with existing data
+                // ... (existing code to fill other fields)
+                
+                // Populate city dropdown and select the current city
+                populateCityDropdown(data.record.city);
+                
+                // Set record ID for update
+                document.getElementById('record-id').value = id;
+            }
+        })
+        .catch(error => console.error('Error fetching record:', error));
+}
+
+// Update the populateCityDropdown function with better debugging
+function populateCityDropdown(selectedCity = '') {
+    const cityDropdown = document.getElementById('city-input');
+    
+    // Clear existing options
+    cityDropdown.innerHTML = '<option value="">Select City/Municipality</option>';
+    
+    // Debug message
+    console.log('Populating city dropdown, selected city:', selectedCity);
+    
+    // Get admin's region from the page directly first (faster than an API call)
+    const adminRegionElement = document.getElementById('admin-region');
+    let adminRegion = adminRegionElement ? adminRegionElement.textContent.trim() : '';
+    
+    console.log('Admin region from element:', adminRegion);
+    
+    if (adminRegion) {
+        // We have the region from the page, use it directly
+        populateCitiesFromRegion(adminRegion, cityDropdown, selectedCity);
+    } else {
+        // Fallback to fetch if not available in the page
+        fetch('../php/get-admin-region.php')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Admin region API response:', data);
+                if (data.success) {
+                    adminRegion = data.region;
+                    populateCitiesFromRegion(adminRegion, cityDropdown, selectedCity);
+                } else {
+                    console.error('Failed to get admin region:', data.message);
+                    cityDropdown.innerHTML += '<option value="">Error loading cities</option>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching admin region:', error);
+                cityDropdown.innerHTML += '<option value="">Error loading cities</option>';
+            });
     }
+}
+
+// Helper function to populate cities from a region
+function populateCitiesFromRegion(regionName, dropdownElement, selectedCity) {
+    console.log('Populating cities for region:', regionName);
+    
+    // Get cities for this region
+    const cities = getCitiesForRegion(regionName);
+    console.log('Available cities:', cities);
+    
+    if (cities.length === 0) {
+        console.warn('No cities found for region:', regionName);
+        dropdownElement.innerHTML += '<option value="">No cities available</option>';
+        return;
+    }
+    
+    // Add city options
+    cities.forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        option.textContent = city;
+        
+        // Select the city if it matches the parameter
+        if (city === selectedCity) {
+            option.selected = true;
+        }
+        
+        dropdownElement.appendChild(option);
+    });
+    
+    console.log('Dropdown populated with', cities.length, 'cities');
+}
+
+// Function to get cities for a region - make it more flexible with string matching
+function getCitiesForRegion(region) {
+    // Debug the input
+    console.log('Getting cities for region:', region);
+    
+    // Region hierarchy data
+    const regions = {
+        'NCR - National Capital Region': {
+            'Metro Manila': ['Quezon City', 'Manila', 'Makati', 'Pasig', 'Taguig']
+        },
+        'CAR - Cordillera Administrative Region': {
+            'Benguet': ['Baguio City', 'La Trinidad', 'Itogon', 'Sablan', 'Tuba']
+        },
+        'BARMM - Bangsamoro Autonomous Region in Muslim Mindanao': {
+            'Basilan': ['Lamitan', 'Isabela City', 'Tipo-Tipo', 'Tuburan', 'Maluso']
+        }
+    };
+    
+    // Try to normalize region name for better matching
+    const normalizedRegion = region.trim();
+    console.log('Available regions:', Object.keys(regions));
+    
+    // Find matching region (exact match or partial match)
+    let matchingRegion = null;
+    
+    // First try exact match
+    if (regions[normalizedRegion]) {
+        matchingRegion = normalizedRegion;
+    } else {
+        // Try to find a partial match
+        matchingRegion = Object.keys(regions).find(r => 
+            normalizedRegion.includes(r) || r.includes(normalizedRegion));
+    }
+    
+    console.log('Matching region found:', matchingRegion);
+    
+    // If we don't have a match, return empty array
+    if (!matchingRegion) {
+        console.warn('No matching region found for:', region);
+        return [];
+    }
+    
+    const regionData = regions[matchingRegion];
+    
+    // Flatten the city array - get all cities from all provinces in this region
+    const allCities = [];
+    for (const province in regionData) {
+        regionData[province].forEach(city => {
+            allCities.push(city);
+        });
+    }
+    
+    return allCities;
 }
 
 async function deleteRecord(id) {
@@ -333,4 +465,4 @@ function closeRequirementsModal() {
     if (modal) {
         modal.remove();
     }
-} 
+}

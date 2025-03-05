@@ -106,15 +106,20 @@
                         <input type="text" id="last-name" name="last_name" required
                             class="mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-[#1B3A57]">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">City/Municipality</label>
-                        <input type="text" id="city" name="city" required
+                    <!-- Change the city dropdown classes to match other form fields -->
+                    <div class="mb-4">
+                        <label for="city-input" class="block text-sm font-medium text-gray-700">City/Municipality</label>
+                        <select id="city-input" name="city" required
                             class="mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-[#1B3A57]">
+                            <option value="">Select City/Municipality</option>
+                            <!-- Options will be populated dynamically -->
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Disability Type</label>
                         <select id="disability-type" name="disability_type" required
-                            class="mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-[#1B3A57]">
+                            class="mt
+                            -none focus:ring-[#1B3A57]">
                             <option value="">Select Type</option>
                             <option value="Physical">Physical Disability</option>
                             <option value="Visual">Visual Disability</option>
@@ -230,4 +235,4 @@
 
     <script src="../js/admin-dashboard.js"></script>
 </body>
-</html> 
+</html>
