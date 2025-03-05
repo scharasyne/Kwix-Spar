@@ -10,7 +10,6 @@ The PWD ID Validator System is a web-based application designed to validate Phil
     - Region
     - Province
     - City/Municipality
-  - Searchable dropdown menus for easy navigation
 
 - **ID Validation Methods**
   - Manual ID number input
