@@ -20,16 +20,11 @@ The PWD ID Validator System is a web-based application designed to validate Phil
     - Real-time preview
     - Automated text extraction
 
-- **Responsive Design**
-  - Mobile-friendly interface
-  - Adaptive navigation menu
-  - Cross-browser compatibility
-
 ## Technologies Used
 - **Frontend**
   - HTML5
   - TailwindCSS
-  - JavaScript (Vanilla)
+  - JavaScript
 
 - **Libraries**
   - Tesseract.js (for OCR functionality)
@@ -54,20 +49,6 @@ The PWD ID Validator System is a web-based application designed to validate Phil
    npx http-server
    ```
 
-## Project Structure
-project-root/
-├── images/
-│ ├── nav_logo.png
-│ └── navb_logo.png
-├── js/
-│ ├── homepage.js # Main JavaScript for homepage functionality
-│ └── image-scanning.js # OCR and image processing logic
-├── html/
-│ ├── homepage.html # Main validation page
-│ ├── feedback.html # Contact/feedback form
-│ └── admin-login.html # Admin authentication page
-└── README.md
-
 ## Usage
 1. **Manual Validation**
    - Select your location using the dropdown menus
@@ -80,7 +61,7 @@ project-root/
    - View extracted information and validation results
 
 ## Security Features
-- Input validation and sanitization
+- Input validation
 - Secure image processing
 - Protected admin access
 
@@ -97,13 +78,9 @@ project-root/
 4. Push to the branch (`git push origin feature/improvement`)
 5. Create a Pull Request
 
-## License
-[Your chosen license]
-
 ## Contact
-For support or queries, please contact [your contact information]
+For support or queries, please contact Zarah Ga-as through email: maria.zarahgaas@gmail.com 
 
 ## Acknowledgments
 - Tesseract.js team for OCR capabilities
 - TailwindCSS team for the styling framework
-- [Any other acknowledgments]
