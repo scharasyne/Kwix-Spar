@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Complete hierarchy data
     const regions = {
         'NCR - National Capital Region': {
-            'Metro Manila': ['Quezon City', 'Manila', 'Makati', 'Pasig', 'Taguig']
+            'Metro Manila': ['Quezon City', 'Manila', 'Makati', 'Pasig', 'Taguig', 'Las Piñas City']
         },
         'CAR - Cordillera Administrative Region': {
             'Benguet': ['Baguio City', 'La Trinidad', 'Itogon', 'Sablan', 'Tuba']
