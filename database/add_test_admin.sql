@@ -1,45 +1,71 @@
 USE pwdi_database;
 
--- to clear existing data
-TRUNCATE TABLE audit_logs;
-TRUNCATE TABLE pwd_records;
-DELETE FROM lgu_admins;
+-- Clear data in correct order (child tables first, then parent tables)
+DELETE FROM pwd_documents;  -- Clear documents first since it references pwd_records
+DELETE FROM audit_logs;     -- Clear audit logs since it references lgu_admins
+DELETE FROM pwd_records;    -- Now safe to clear pwd_records
+DELETE FROM lgu_admins;     -- Then clear admins
 
+-- Insert admin data
+-- BARMM Admin
 INSERT INTO lgu_admins (
     email,
     password,
     first_name,
     last_name,
     region,
+    province,
+    city,
     role
 ) VALUES (
-    'BARMM@doh.gov',
-    'BARMMdatabase', -- plain text muna for testing; di gumagana hash (before ko i-dl php hhahh)
-    'BARMM',
+    'lamitan@barmm.gov.ph',
+    'BARMMdatabase',  -- plain text for testing
+    'Lamitan',
     'Administrator',
     'BARMM - Bangsamoro Autonomous Region in Muslim Mindanao',
-    'regional_admin'
+    'Basilan',
+    'Lamitan',
+    'city_admin'
 );
 
+-- NCR Admin
 INSERT INTO lgu_admins (
     email,
     password,
     first_name,
     last_name,
     region,
+    province,
+    city,
     role
-) VALUES 
-('NCR@doh.gov', 
---  '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- Password: NCRdatabase
-'$2y$10$vqATO6CsQdKe11kGQvldv.bfp6hokDquq1Is.zMwSSozbaGgvlf6u',
- 'NCR', 
- 'Administrator',
- 'NCR - National Capital Region',
- 'regional_admin'),
- 
-('CAR@doh.gov', 
- '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- Password: CARdatabase
- 'CAR', 
- 'Administrator',
- 'CAR - Cordillera Administrative Region',
- 'regional_admin'); 
+) VALUES (
+    'qc@ncr.gov.ph',
+    'NCRdatabase',
+    'Quezon City',
+    'Administrator',
+    'NCR - National Capital Region',
+    'Metro Manila',
+    'Quezon City',
+    'city_admin'
+);
+
+-- CAR Admin
+INSERT INTO lgu_admins (
+    email,
+    password,
+    first_name,
+    last_name,
+    region,
+    province,
+    city,
+    role
+) VALUES (
+    'baguio@car.gov.ph',
+    'CARdatabase',
+    'Baguio',
+    'Administrator',
+    'CAR - Cordillera Administrative Region',
+    'Benguet',
+    'Baguio City',
+    'city_admin'
+); 

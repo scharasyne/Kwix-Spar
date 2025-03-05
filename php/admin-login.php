@@ -11,48 +11,46 @@ try {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
     $region = $_POST['region'] ?? '';
+    $province = $_POST['province'] ?? '';
+    $city = $_POST['city'] ?? '';
 
     // Debug logging
     error_log("Login attempt with:");
     error_log("Email: " . $email);
     error_log("Region: " . $region);
+    error_log("Province: " . $province);
+    error_log("City: " . $city);
 
-    if (empty($email) || empty($password) || empty($region)) {
+    if (empty($email) || empty($password) || empty($region) || empty($province) || empty($city)) {
         throw new Exception('All fields are required');
     }
 
-    // Check if user exists
-    $stmt = $conn->prepare("SELECT * FROM lgu_admins WHERE email = ? AND region = ?");
-    $stmt->execute([$email, $region]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Validate admin credentials
+    $stmt = $conn->prepare("SELECT * FROM lgu_admins WHERE email = ? AND province = ? AND city = ?");
+    $stmt->execute([$email, $province, $city]);
+    $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Debug logging
-    error_log("User found: " . ($user ? 'Yes' : 'No'));
+    if ($admin && $password === $admin['password']) { // In production, use password_verify()
+        // Set all necessary session variables
+        $_SESSION['admin_id'] = $admin['id'];
+        $_SESSION['admin_email'] = $admin['email'];
+        $_SESSION['admin_region'] = $admin['region'];
+        $_SESSION['admin_province'] = $admin['province'];
+        $_SESSION['admin_city'] = $admin['city'];
+        $_SESSION['admin_role'] = $admin['role'];
 
-    if (!$user) {
-        throw new Exception('User not found');
-    }
-
-    // Debug password check
-    error_log("Stored password: " . $user['password']);
-    error_log("Provided password: " . $password);
-
-    // For testing purposes, accept plain text password
-    if ($password === $user['password']) {
-        // Set session variables
-        $_SESSION['admin_id'] = $user['id'];
-        $_SESSION['admin_email'] = $user['email'];
-        $_SESSION['admin_region'] = $user['region'];
-        $_SESSION['admin_role'] = $user['role'];
-
-        error_log("Login successful for user: " . $email);
+        // Debug log
+        error_log("Session variables set: " . print_r($_SESSION, true));
 
         echo json_encode([
             'success' => true,
             'message' => 'Login successful'
         ]);
     } else {
-        throw new Exception('Invalid password');
+        echo json_encode([
+            'success' => false,
+            'message' => 'Invalid credentials'
+        ]);
     }
 
 } catch (Exception $e) {

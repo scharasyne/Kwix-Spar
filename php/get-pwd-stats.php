@@ -4,21 +4,34 @@ require_once 'db-connect.php';
 header('Content-Type: application/json');
 
 try {
-    $region = $_SESSION['admin_region'];
-    
-    // Get total count
-    $stmt = $conn->prepare("SELECT 
+    // Simple query to get all stats at once
+    $query = "SELECT 
         COUNT(*) as total,
-        SUM(CASE WHEN expiry_date >= CURDATE() THEN 1 ELSE 0 END) as active,
-        SUM(CASE WHEN expiry_date < CURDATE() THEN 1 ELSE 0 END) as expired
-        FROM pwd_records 
-        WHERE region = ?");
-    $stmt->execute([$region]);
+        SUM(CASE WHEN id_expiry_date >= CURDATE() THEN 1 ELSE 0 END) as active,
+        SUM(CASE WHEN id_expiry_date < CURDATE() THEN 1 ELSE 0 END) as expired
+        FROM pwd_records";
+
+    $stmt = $conn->prepare($query);
+    $stmt->execute();
     $stats = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    echo json_encode($stats);
-} catch (Exception $e) {
+
+    // Convert null values to 0
+    $stats['total'] = (int)$stats['total'] ?? 0;
+    $stats['active'] = (int)$stats['active'] ?? 0;
+    $stats['expired'] = (int)$stats['expired'] ?? 0;
+
+    // Debug log
+    error_log("Stats calculated: " . print_r($stats, true));
+
     echo json_encode([
-        'error' => $e->getMessage()
+        'success' => true,
+        'data' => $stats
+    ]);
+
+} catch (Exception $e) {
+    error_log("Error getting stats: " . $e->getMessage());
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error getting stats: ' . $e->getMessage()
     ]);
 } 
