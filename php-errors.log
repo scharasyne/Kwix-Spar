@@ -668,3 +668,85 @@
 
 )
 
+[05-Mar-2025 03:00:38 Europe/Berlin] PHP Notice:  session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\Kwix-Spar\php\check-auth.php on line 2
+[05-Mar-2025 03:00:38 Europe/Berlin] POST data: Array
+(
+    [pwd_id] => 2027
+    [first_name] => Glenn
+    [last_name] => Solis
+    [city] => Lamitan
+    [disability_type] => Multiple
+    [expiry_date] => 2027-01-01
+    [birth_date] => 2005-01-01
+    [gender] => Male
+    [address] => dsadasd
+)
+
+[05-Mar-2025 03:00:38 Europe/Berlin] FILES data: Array
+(
+    [medical_certificate] => Array
+        (
+            [name] => Kwix Spar - PWDi.pdf
+            [full_path] => Kwix Spar - PWDi.pdf
+            [type] => application/pdf
+            [tmp_name] => C:\xampp\tmp\phpA246.tmp
+            [error] => 0
+            [size] => 5854671
+        )
+
+    [barangay_certification] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo (2).png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpA2A5.tmp
+            [error] => 0
+            [size] => 28984
+        )
+
+    [id_picture] => Array
+        (
+            [name] => Blue Flat Illustrative Travel Agency Logo.png
+            [full_path] => Blue Flat Illustrative Travel Agency Logo.png
+            [type] => image/png
+            [tmp_name] => C:\xampp\tmp\phpA2B5.tmp
+            [error] => 0
+            [size] => 37739
+        )
+
+    [additional_documents] => Array
+        (
+            [name] => Array
+                (
+                    [0] => 
+                )
+
+            [full_path] => Array
+                (
+                    [0] => 
+                )
+
+            [type] => Array
+                (
+                    [0] => 
+                )
+
+            [tmp_name] => Array
+                (
+                    [0] => 
+                )
+
+            [error] => Array
+                (
+                    [0] => 4
+                )
+
+            [size] => Array
+                (
+                    [0] => 0
+                )
+
+        )
+
+)
+
